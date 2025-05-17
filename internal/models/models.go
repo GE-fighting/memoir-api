@@ -25,6 +25,10 @@ const (
 	CategoryTravel = "travel"
 	CategoryDaily  = "daily"
 
+	// 个人媒体分类
+	PersonalCategoryPhoto = "photos"
+	PersonalCategoryVideo = "videos"
+
 	// 心愿清单优先级
 	PriorityHigh   = 1
 	PriorityMedium = 2
@@ -169,6 +173,23 @@ type PhotoVideo struct {
 	Couple   Couple         `json:"-" gorm:"-"`
 	Event    *TimelineEvent `json:"event,omitempty" gorm:"-"`
 	Location *Location      `json:"location,omitempty" gorm:"-"`
+}
+
+// PersonalMedia 个人空间的照片、视频和其他内容
+type PersonalMedia struct {
+	Base
+	UserID       int64           `json:"user_id" gorm:"not null;index"` // 关键区别：属于单个用户
+	MediaURL     string          `json:"media_url" gorm:"type:text;not null"`
+	MediaType    string          `json:"media_type" gorm:"type:varchar(10);not null"` // 'photo' or 'video'
+	Category     string          `json:"category" gorm:"type:varchar(50);not null"`   // 'photos', 'videos', 'notes', 'favorites'
+	ThumbnailURL *string         `json:"thumbnail_url,omitempty" gorm:"type:text"`
+	Description  json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
+	Title        string          `json:"title" gorm:"type:varchar(100)"`
+	IsPrivate    bool            `json:"is_private" gorm:"not null;default:true"`
+	Tags         []string        `json:"tags" gorm:"type:text[]"`
+
+	// 关联
+	User User `json:"-" gorm:"-"`
 }
 
 // Wishlist 心愿清单
