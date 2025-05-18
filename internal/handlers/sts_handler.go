@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,7 @@ func GenerateSTSToken(c *gin.Context) {
 	}
 
 	// Generate STS token
-	token, err := aliyun.GenerateSTSToken(userID.(string))
+	token, err := aliyun.GenerateSTSToken(fmt.Sprintf("%v", userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to generate STS token: " + err.Error(),

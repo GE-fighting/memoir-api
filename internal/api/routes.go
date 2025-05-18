@@ -85,6 +85,17 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB) {
 		mediaRoutes.DELETE("/:id", handlers.DeleteMediaHandler(services))
 	}
 
+	// 个人媒体路由
+	// 注册个人媒体处
+	personalMediaRoutes := protected.Group("/personal-media")
+	{
+		personalMediaRoutes.POST("/url", handlers.CreatePersonalMediaWithURLHandler(services))
+		personalMediaRoutes.GET("", handlers.QueryPersonalMediaHandler(services))
+		personalMediaRoutes.GET("/:id", handlers.GetPersonalMediaByIDHandler(services))
+		personalMediaRoutes.PUT("/:id", handlers.UpdatePersonalMediaHandler(services))
+		personalMediaRoutes.DELETE("/:id", handlers.DeletePersonalMediaHandler(services))
+	}
+
 	// Wishlist routes
 	wishlistRoutes := protected.Group("/wishlist")
 	{

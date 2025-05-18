@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"net/url"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -22,6 +24,8 @@ type PersonalMediaRepository interface {
 	Delete(ctx context.Context, id int64) error
 	// 查询个人媒体（支持分页和筛选）
 	Query(ctx context.Context, userID int64, category, mediaType string, page, pageSize int) ([]models.PersonalMedia, int64, error)
+	// 迁移现有媒体数据，添加路径信息
+	MigrateExistingMedia(ctx context.Context) error
 }
 
 // GormPersonalMediaRepository 个人媒体仓库的GORM实现
@@ -103,4 +107,37 @@ func (r *GormPersonalMediaRepository) Query(ctx context.Context, userID int64, c
 	}
 
 	return media, total, nil
+}
+
+// MigrateExistingMedia 为现有媒体记录添加路径信息
+func (r *GormPersonalMediaRepository) MigrateExistingMedia(ctx context.Context) error {
+	// 查找所有没有path字段的记录
+	var mediaList []models.PersonalMedia
+	err := r.db.WithContext(ctx).Where("path = '' OR path IS NULL").Find(&mediaList).Error
+	if err != nil {
+		return err
+	}
+
+	// 处理每条记录
+	for _, media := range mediaList {
+		// 从URL中提取路径
+		parsedURL, err := url.Parse(media.MediaURL)
+		if err != nil {
+			continue // 跳过无法解析的URL
+		}
+
+		// 获取路径部分（去除开头的斜杠）
+		path := strings.TrimPrefix(parsedURL.Path, "/")
+		if path == "" {
+			continue // 跳过无法提取路径的记录
+		}
+
+		// 更新记录
+		err = r.db.WithContext(ctx).Model(&models.PersonalMedia{}).Where("id = ?", media.ID).Update("path", path).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

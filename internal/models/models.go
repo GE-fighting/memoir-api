@@ -187,6 +187,7 @@ type PersonalMedia struct {
 	Title        string          `json:"title" gorm:"type:varchar(100)"`
 	IsPrivate    bool            `json:"is_private" gorm:"not null;default:true"`
 	Tags         []string        `json:"tags" gorm:"type:text[]"`
+	Path         string          `json:"path" gorm:"type:text"` // 文件在OSS中的完整路径，格式为 userId/年/月/日/文件名
 
 	// 关联
 	User User `json:"-" gorm:"-"`

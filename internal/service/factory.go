@@ -14,7 +14,6 @@ type Factory interface {
 	PhotoVideo() PhotoVideoService
 	Wishlist() WishlistService
 	PersonalMedia() PersonalMediaService
-	MediaUploader() MediaUploader
 }
 
 // factory 服务工厂实现
@@ -27,7 +26,6 @@ type factory struct {
 	photoVideoService    PhotoVideoService
 	wishlistService      WishlistService
 	personalMediaService PersonalMediaService
-	mediaUploader        MediaUploader
 }
 
 // NewFactory 创建服务工厂
@@ -42,8 +40,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 	timelineEventService := NewTimelineEventService(repoFactory.TimelineEvent())
 	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo())
 	wishlistService := NewWishlistService(repoFactory.Wishlist())
-	mediaUploader := NewMediaUploader()
-	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia(), mediaUploader)
+	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())
 
 	return &factory{
 		userService:          userService,
@@ -54,7 +51,6 @@ func NewFactory(repoFactory repository.Factory) Factory {
 		photoVideoService:    photoVideoService,
 		wishlistService:      wishlistService,
 		personalMediaService: personalMediaService,
-		mediaUploader:        mediaUploader,
 	}
 }
 
@@ -96,9 +92,4 @@ func (f *factory) Wishlist() WishlistService {
 // PersonalMedia 获取个人媒体服务
 func (f *factory) PersonalMedia() PersonalMediaService {
 	return f.personalMediaService
-}
-
-// MediaUploader 获取媒体上传器
-func (f *factory) MediaUploader() MediaUploader {
-	return f.mediaUploader
 }

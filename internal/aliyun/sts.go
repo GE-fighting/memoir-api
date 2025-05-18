@@ -6,7 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/sts"
+	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
+	sts20150401 "github.com/alibabacloud-go/sts-20150401/v2/client"
+	util "github.com/alibabacloud-go/tea-utils/v2/service"
+	"github.com/alibabacloud-go/tea/tea"
 )
 
 // STSConfig holds the configuration for Aliyun STS token generation
@@ -69,55 +72,59 @@ func GenerateSTSToken(userID string) (*STSToken, error) {
 		return nil, err
 	}
 
-	// Create STS client
-	log.Println("创建STS客户端...")
-	client, err := sts.NewClientWithAccessKey(
-		config.RegionID,
-		config.AccessKeyID,
-		config.AccessKeySecret,
-	)
+	// 创建OpenAPI配置
+	clientConfig := &openapi.Config{
+		AccessKeyId:     tea.String(config.AccessKeyID),
+		AccessKeySecret: tea.String(config.AccessKeySecret),
+	}
+
+	// 使用正确的区域端点
+	endpoint := fmt.Sprintf("sts.%s.aliyuncs.com", config.RegionID)
+	log.Printf("使用STS端点: %s", endpoint)
+	clientConfig.Endpoint = tea.String(endpoint)
+
+	// 创建STS客户端
+	client, err := sts20150401.NewClient(clientConfig)
 	if err != nil {
 		log.Printf("创建STS客户端失败: %v", err)
 		return nil, fmt.Errorf("failed to create STS client: %w", err)
 	}
 
-	// Create request
-	log.Println("创建AssumeRole请求...")
-	request := sts.CreateAssumeRoleRequest()
-	request.Scheme = "https"
-	request.RoleArn = config.RoleArn
-	request.RoleSessionName = config.SessionName
-
-	// Set token expiration to 1 hour
-	request.DurationSeconds = "3600"
-
-	// Create policy to restrict access to user's directory
+	// 创建策略
 	log.Println("生成访问策略...")
 	policy := generatePolicy(config.BucketName, userID)
 	log.Printf("生成的策略: %s", policy)
-	request.Policy = policy
 
-	// Send request
+	// 创建AssumeRole请求
+	request := &sts20150401.AssumeRoleRequest{
+		RoleArn:         tea.String(config.RoleArn),
+		RoleSessionName: tea.String(config.SessionName),
+		DurationSeconds: tea.Int64(3600), // 1小时
+		// Policy:          tea.String(policy),
+	}
+
+	// 发送请求
 	log.Println("发送AssumeRole请求...")
-	response, err := client.AssumeRole(request)
+	response, err := client.AssumeRoleWithOptions(request, &util.RuntimeOptions{})
 	if err != nil {
 		log.Printf("AssumeRole请求失败: %v", err)
 		return nil, fmt.Errorf("failed to assume role: %w", err)
 	}
 
 	log.Println("AssumeRole请求成功，已获取临时凭证")
+	credentials := response.Body.Credentials
 
-	// Create token response
+	// 创建token响应
 	token := &STSToken{
-		AccessKeyID:     response.Credentials.AccessKeyId,
-		AccessKeySecret: response.Credentials.AccessKeySecret,
-		SecurityToken:   response.Credentials.SecurityToken,
-		Expiration:      response.Credentials.Expiration,
+		AccessKeyID:     *credentials.AccessKeyId,
+		AccessKeySecret: *credentials.AccessKeySecret,
+		SecurityToken:   *credentials.SecurityToken,
+		Expiration:      *credentials.Expiration,
 		Region:          config.RegionID,
 		Bucket:          config.BucketName,
 	}
 
-	log.Println("STS令牌生成成功，过期时间:", response.Credentials.Expiration)
+	log.Println("STS令牌生成成功，过期时间:", *credentials.Expiration)
 	return token, nil
 }
 
@@ -129,20 +136,16 @@ func generatePolicy(bucket, userID string) string {
 	resourcePath := fmt.Sprintf("acs:oss:*:*:%s/%s", bucket, userID)
 	log.Printf("资源路径: %s", resourcePath)
 
-	// Allow listing objects, getting objects, and putting objects
+	// Allow only putting objects in the user's path
 	policyDocument := map[string]interface{}{
 		"Version": "1",
 		"Statement": []map[string]interface{}{
 			{
 				"Effect": "Allow",
 				"Action": []string{
-					"oss:ListObjects",
-					"oss:GetObject",
-					"oss:PutObject",
-					"oss:DeleteObject",
+					"oss:*",
 				},
 				"Resource": []string{
-					resourcePath,
 					fmt.Sprintf("%s/*", resourcePath),
 				},
 			},
