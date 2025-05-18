@@ -95,4 +95,10 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB) {
 		wishlistRoutes.PUT("/:id/status", handlers.UpdateWishlistItemStatusHandler(services))
 		wishlistRoutes.DELETE("/:id", handlers.DeleteWishlistItemHandler(services))
 	}
+
+	// OSS (Aliyun Object Storage Service) routes
+	ossRoutes := protected.Group("/oss")
+	{
+		ossRoutes.GET("/token", handlers.GenerateSTSToken)
+	}
 }

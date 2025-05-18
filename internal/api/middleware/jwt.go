@@ -40,7 +40,7 @@ func JWTAuthMiddleware(services service.Factory) gin.HandlerFunc {
 		}
 
 		// Set user ID to context
-		c.Set("userID", userID)
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }

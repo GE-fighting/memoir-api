@@ -12,7 +12,7 @@ import (
 func GetCurrentUserHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从上下文中获取用户ID（JWT中间件设置）
-		userIDValue, exists := c.Get("userID")
+		userIDValue, exists := c.Get("user_id")
 		if !exists {
 			response := dto.NewErrorResponse(http.StatusUnauthorized, "用户未登录", "未找到用户ID")
 			c.JSON(http.StatusUnauthorized, response)
