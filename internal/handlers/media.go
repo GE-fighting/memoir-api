@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 func ListMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement list media logic
-		c.JSON(http.StatusOK, gin.H{"message": "List media endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取媒体列表成功"))
 	}
 }
 
@@ -19,7 +20,7 @@ func ListMediaHandler(services service.Factory) gin.HandlerFunc {
 func UploadMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement upload media logic
-		c.JSON(http.StatusOK, gin.H{"message": "Upload media endpoint"})
+		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("上传媒体成功"))
 	}
 }
 
@@ -27,7 +28,7 @@ func UploadMediaHandler(services service.Factory) gin.HandlerFunc {
 func GetMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement get media logic
-		c.JSON(http.StatusOK, gin.H{"message": "Get media endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取媒体成功"))
 	}
 }
 
@@ -35,7 +36,7 @@ func GetMediaHandler(services service.Factory) gin.HandlerFunc {
 func UpdateMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement update media logic
-		c.JSON(http.StatusOK, gin.H{"message": "Update media endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新媒体成功"))
 	}
 }
 
@@ -43,6 +44,6 @@ func UpdateMediaHandler(services service.Factory) gin.HandlerFunc {
 func DeleteMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement delete media logic
-		c.JSON(http.StatusOK, gin.H{"message": "Delete media endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除媒体成功"))
 	}
 }

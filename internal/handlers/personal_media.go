@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 )
 
@@ -49,19 +50,13 @@ func CreatePersonalMediaWithURLHandler(services service.Factory) gin.HandlerFunc
 	return func(c *gin.Context) {
 		userID, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, ErrorResponse{
-				Code:    ErrCodeUnauthorized,
-				Message: "未授权",
-			})
+			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "未授权", "用户ID不存在"))
 			return
 		}
 
 		var req CreatePersonalMediaWithURLRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的请求参数: " + err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的请求参数", err.Error()))
 			return
 		}
 
@@ -82,14 +77,11 @@ func CreatePersonalMediaWithURLHandler(services service.Factory) gin.HandlerFunc
 			req.Tags,
 		)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Code:    ErrCodeInternalServer,
-				Message: "创建个人媒体失败: " + err.Error(),
-			})
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "创建个人媒体失败", err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusCreated, media)
+		c.JSON(http.StatusCreated, dto.NewSuccessResponse(media, "创建个人媒体成功"))
 	}
 }
 
@@ -129,39 +121,33 @@ func QueryPersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, ErrorResponse{
-				Code:    ErrCodeUnauthorized,
-				Message: "未授权",
-			})
+			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "未授权", "用户ID不存在"))
 			return
 		}
 
 		var req QueryPersonalMediaRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的请求参数: " + err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的请求参数", err.Error()))
 			return
 		}
 
 		// 查询个人媒体（从数据库获取，而非直接查询OSS）
 		media, total, err := services.PersonalMedia().Query(c, userID.(int64), req.Category, req.MediaType, req.Page, req.PageSize)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
-				Code:    ErrCodeInternalServer,
-				Message: "查询个人媒体失败: " + err.Error(),
-			})
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "查询个人媒体失败", err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusOK, PaginatedResponse{
+		// 创建分页响应
+		paginatedResponse := PaginatedResponse{
 			Data:      media,
 			Total:     total,
 			Page:      req.Page,
 			PageSize:  req.PageSize,
 			TotalPage: (total + int64(req.PageSize) - 1) / int64(req.PageSize),
-		})
+		}
+
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(paginatedResponse, "查询个人媒体成功"))
 	}
 }
 
@@ -182,10 +168,7 @@ func GetPersonalMediaByIDHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, ErrorResponse{
-				Code:    ErrCodeUnauthorized,
-				Message: "未授权",
-			})
+			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "未授权", "用户ID不存在"))
 			return
 		}
 
@@ -193,38 +176,23 @@ func GetPersonalMediaByIDHandler(services service.Factory) gin.HandlerFunc {
 		idStr := c.Param("id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的ID",
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的ID", err.Error()))
 			return
 		}
 
-		// 获取媒体
-		media, err := services.PersonalMedia().GetByID(c, id, userID.(int64))
+		// 获取个人媒体
+		media, err := services.PersonalMedia().GetByID(c, userID.(int64), id)
 		if err != nil {
-			// 根据错误类型返回不同状态码
-			switch err.Error() {
-			case "无权访问此媒体":
-				c.JSON(http.StatusForbidden, ErrorResponse{
-					Code:    "FORBIDDEN",
-					Message: err.Error(),
-				})
-			case "媒体不存在":
-				c.JSON(http.StatusNotFound, ErrorResponse{
-					Code:    "NOT_FOUND",
-					Message: err.Error(),
-				})
-			default:
-				c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Code:    "INTERNAL_SERVER_ERROR",
-					Message: err.Error(),
-				})
-			}
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "获取个人媒体失败", err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusOK, media)
+		if media == nil {
+			c.JSON(http.StatusNotFound, dto.NewErrorResponse(http.StatusNotFound, "媒体不存在", "media not found"))
+			return
+		}
+
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(media, "获取个人媒体成功"))
 	}
 }
 
@@ -255,10 +223,7 @@ func UpdatePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, ErrorResponse{
-				Code:    ErrCodeUnauthorized,
-				Message: "未授权",
-			})
+			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "未授权", "用户ID不存在"))
 			return
 		}
 
@@ -266,19 +231,13 @@ func UpdatePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 		idStr := c.Param("id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的ID",
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的ID", err.Error()))
 			return
 		}
 
 		var req UpdatePersonalMediaRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的请求参数: " + err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的请求参数", err.Error()))
 			return
 		}
 
@@ -291,25 +250,16 @@ func UpdatePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 			// 根据错误类型返回不同状态码
 			switch err.Error() {
 			case "无权访问此媒体":
-				c.JSON(http.StatusForbidden, ErrorResponse{
-					Code:    "FORBIDDEN",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusForbidden, dto.NewErrorResponse(http.StatusForbidden, "无权访问此媒体", err.Error()))
 			case "媒体不存在":
-				c.JSON(http.StatusNotFound, ErrorResponse{
-					Code:    "NOT_FOUND",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusNotFound, dto.NewErrorResponse(http.StatusNotFound, "媒体不存在", err.Error()))
 			default:
-				c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Code:    "INTERNAL_SERVER_ERROR",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "更新媒体失败", err.Error()))
 			}
 			return
 		}
 
-		c.JSON(http.StatusOK, media)
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(media, "更新媒体成功"))
 	}
 }
 
@@ -331,10 +281,7 @@ func DeletePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, ErrorResponse{
-				Code:    ErrCodeUnauthorized,
-				Message: "未授权",
-			})
+			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "未授权", "用户ID不存在"))
 			return
 		}
 
@@ -342,10 +289,7 @@ func DeletePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 		idStr := c.Param("id")
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{
-				Code:    ErrCodeBadRequest,
-				Message: "无效的ID",
-			})
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的ID", err.Error()))
 			return
 		}
 
@@ -355,24 +299,15 @@ func DeletePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 			// 根据错误类型返回不同状态码
 			switch err.Error() {
 			case "无权访问此媒体":
-				c.JSON(http.StatusForbidden, ErrorResponse{
-					Code:    "FORBIDDEN",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusForbidden, dto.NewErrorResponse(http.StatusForbidden, "无权访问此媒体", err.Error()))
 			case "媒体不存在":
-				c.JSON(http.StatusNotFound, ErrorResponse{
-					Code:    "NOT_FOUND",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusNotFound, dto.NewErrorResponse(http.StatusNotFound, "媒体不存在", err.Error()))
 			default:
-				c.JSON(http.StatusInternalServerError, ErrorResponse{
-					Code:    "INTERNAL_SERVER_ERROR",
-					Message: err.Error(),
-				})
+				c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除媒体失败", err.Error()))
 			}
 			return
 		}
 
-		c.Status(http.StatusNoContent)
+		c.JSON(http.StatusNoContent, dto.EmptySuccessResponse("删除媒体成功"))
 	}
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 func ListWishlistItemsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement list wishlist items logic
-		c.JSON(http.StatusOK, gin.H{"message": "List wishlist items endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取心愿单列表成功"))
 	}
 }
 
@@ -19,7 +20,7 @@ func ListWishlistItemsHandler(services service.Factory) gin.HandlerFunc {
 func CreateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement create wishlist item logic
-		c.JSON(http.StatusOK, gin.H{"message": "Create wishlist item endpoint"})
+		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建心愿单项目成功"))
 	}
 }
 
@@ -27,7 +28,7 @@ func CreateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 func GetWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement get wishlist item logic
-		c.JSON(http.StatusOK, gin.H{"message": "Get wishlist item endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取心愿单项目成功"))
 	}
 }
 
@@ -35,7 +36,7 @@ func GetWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 func UpdateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement update wishlist item logic
-		c.JSON(http.StatusOK, gin.H{"message": "Update wishlist item endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新心愿单项目成功"))
 	}
 }
 
@@ -43,7 +44,7 @@ func UpdateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 func UpdateWishlistItemStatusHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement update wishlist item status logic
-		c.JSON(http.StatusOK, gin.H{"message": "Update wishlist item status endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新心愿单项目状态成功"))
 	}
 }
 
@@ -51,6 +52,6 @@ func UpdateWishlistItemStatusHandler(services service.Factory) gin.HandlerFunc {
 func DeleteWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement delete wishlist item logic
-		c.JSON(http.StatusOK, gin.H{"message": "Delete wishlist item endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除心愿单项目成功"))
 	}
 }

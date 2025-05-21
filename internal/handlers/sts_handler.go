@@ -7,40 +7,27 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"memoir-api/internal/aliyun"
+	"memoir-api/internal/api/dto"
 )
 
 // GenerateSTSToken generates a temporary STS token for OSS access
-// @Summary Generate an STS token for Aliyun OSS access
-// @Description Generates a temporary STS token for accessing Aliyun OSS
-// @Tags oss
-// @Accept json
-// @Produce json
-// @Param category body STSRequest true "Category for uploads (optional)"
-// @Success 200 {object} aliyun.STSToken
-// @Failure 400 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /api/oss/token [post]
 func GenerateSTSToken(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	// For development, we'll use a hardcoded user ID
 
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "User ID is required",
-		})
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "用户ID必填", "User ID is required"))
 		return
 	}
 
 	// Generate STS token
 	token, err := aliyun.GenerateSTSToken(fmt.Sprintf("%v", userID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate STS token: " + err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成STS令牌失败", err.Error()))
 		return
 	}
 
 	// Return token
-	c.JSON(http.StatusOK, token)
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(token, "STS令牌生成成功"))
 }

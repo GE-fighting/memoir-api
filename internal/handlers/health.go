@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"memoir-api/internal/api/dto"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -51,13 +53,13 @@ func HealthCheckHandler(db *gorm.DB) gin.HandlerFunc {
 			Version:   "1.0.0", // You might want to fetch this from a version package or env variable
 		}
 
-		c.JSON(http.StatusOK, response)
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(response, "系统状态"))
 	}
 }
 
 // PingHandler handles the ping endpoint request
 func PingHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("pong"))
 	}
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 func ListTimelineEventsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement list timeline events logic
-		c.JSON(http.StatusOK, gin.H{"message": "List timeline events endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取时间线事件列表成功"))
 	}
 }
 
@@ -19,7 +20,7 @@ func ListTimelineEventsHandler(services service.Factory) gin.HandlerFunc {
 func CreateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement create timeline event logic
-		c.JSON(http.StatusOK, gin.H{"message": "Create timeline event endpoint"})
+		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建时间线事件成功"))
 	}
 }
 
@@ -27,7 +28,7 @@ func CreateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 func GetTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement get timeline event logic
-		c.JSON(http.StatusOK, gin.H{"message": "Get timeline event endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取时间线事件成功"))
 	}
 }
 
@@ -35,7 +36,7 @@ func GetTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 func UpdateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement update timeline event logic
-		c.JSON(http.StatusOK, gin.H{"message": "Update timeline event endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新时间线事件成功"))
 	}
 }
 
@@ -43,6 +44,6 @@ func UpdateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 func DeleteTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement delete timeline event logic
-		c.JSON(http.StatusOK, gin.H{"message": "Delete timeline event endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除时间线事件成功"))
 	}
 }

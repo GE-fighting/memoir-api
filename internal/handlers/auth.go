@@ -28,35 +28,35 @@ func NewAuthHandler(services service.Factory) *AuthHandler {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求格式错误", err.Error()))
 		return
 	}
 
 	user, err := h.userService.Register(c, req.Username, req.Email, req.Password, req.PairToken)
 	if err != nil {
 		if err == service.ErrUserExists {
-			c.JSON(http.StatusConflict, gin.H{"error": "用户已存在"})
+			c.JSON(http.StatusConflict, dto.NewErrorResponse(http.StatusConflict, "用户已存在", err.Error()))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "注册失败", err.Error()))
 		return
 	}
 
 	// 生成JWT令牌
 	tokenResp, err := h.generateTokens(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成令牌失败"})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成令牌失败", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusCreated, tokenResp)
+	c.JSON(http.StatusCreated, dto.NewSuccessResponse(tokenResp, "注册成功"))
 }
 
 // Login 用户登录
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求格式错误", err.Error()))
 		return
 	}
 
@@ -70,27 +70,29 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	case req.Username != "":
 		user, err = h.userService.LoginByUsername(c, req.Username, req.Password)
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "请提供用户名或邮箱"})
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请提供用户名或邮箱", "missing login credentials"))
 		return
 	}
 
 	if err != nil {
 		status := http.StatusInternalServerError
+		message := "登录失败"
 		if err == service.ErrInvalidPassword {
 			status = http.StatusUnauthorized
+			message = "密码错误"
 		}
-		c.JSON(status, gin.H{"error": err.Error()})
+		c.JSON(status, dto.NewErrorResponse(status, message, err.Error()))
 		return
 	}
 
 	// 生成JWT令牌
 	tokenResp, err := h.generateTokens(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成令牌失败"})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成令牌失败", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, tokenResp)
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp, "登录成功"))
 }
 
 // 生成JWT令牌
@@ -117,28 +119,28 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求格式错误", err.Error()))
 		return
 	}
 
 	// 使用JWT服务验证刷新令牌
 	_, claims, err := h.jwtService.ValidateToken(req.RefreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的刷新令牌"})
+		c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "无效的刷新令牌", err.Error()))
 		return
 	}
 
 	// 检查令牌类型
 	tokenType, ok := claims["typ"].(string)
 	if !ok || tokenType != "refresh" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的令牌类型"})
+		c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "无效的令牌类型", "invalid token type"))
 		return
 	}
 
 	// 获取用户ID
 	userIDFloat, ok := claims["sub"].(float64)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取用户ID"})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "无法获取用户ID", "invalid user id in token"))
 		return
 	}
 	userID := int64(userIDFloat)
@@ -146,9 +148,9 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	// 生成新令牌
 	tokenResp, err := h.generateTokens(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成令牌失败"})
+		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成令牌失败", err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, tokenResp)
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp, "令牌刷新成功"))
 }

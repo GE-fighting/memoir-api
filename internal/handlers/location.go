@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 func ListLocationsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement list locations logic
-		c.JSON(http.StatusOK, gin.H{"message": "List locations endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取位置列表成功"))
 	}
 }
 
@@ -19,7 +20,7 @@ func ListLocationsHandler(services service.Factory) gin.HandlerFunc {
 func CreateLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement create location logic
-		c.JSON(http.StatusOK, gin.H{"message": "Create location endpoint"})
+		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建位置成功"))
 	}
 }
 
@@ -27,7 +28,7 @@ func CreateLocationHandler(services service.Factory) gin.HandlerFunc {
 func GetLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement get location logic
-		c.JSON(http.StatusOK, gin.H{"message": "Get location endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取位置成功"))
 	}
 }
 
@@ -35,7 +36,7 @@ func GetLocationHandler(services service.Factory) gin.HandlerFunc {
 func UpdateLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement update location logic
-		c.JSON(http.StatusOK, gin.H{"message": "Update location endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新位置成功"))
 	}
 }
 
@@ -43,6 +44,6 @@ func UpdateLocationHandler(services service.Factory) gin.HandlerFunc {
 func DeleteLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement delete location logic
-		c.JSON(http.StatusOK, gin.H{"message": "Delete location endpoint"})
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除位置成功"))
 	}
 }
