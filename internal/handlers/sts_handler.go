@@ -22,7 +22,7 @@ func GenerateSTSToken(c *gin.Context) {
 	}
 
 	// Generate STS token
-	token, err := aliyun.GenerateSTSToken(fmt.Sprintf("%v", userID))
+	token, err := aliyun.GenerateSTSToken(c.Request.Context(), fmt.Sprintf("%v", userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成STS令牌失败", err.Error()))
 		return

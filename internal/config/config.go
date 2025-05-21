@@ -5,13 +5,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 // Config 存储应用程序配置
 type Config struct {
-	DB DBConfig
+	DB    DBConfig
+	Redis RedisConfig
 }
 
 // DBConfig 存储数据库配置
@@ -22,6 +24,14 @@ type DBConfig struct {
 	Password string
 	Name     string
 	SSLMode  string
+}
+
+// RedisConfig 存储Redis配置
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
 }
 
 // ConnectionString 返回数据库连接字符串
@@ -83,6 +93,14 @@ func New() *Config {
 	// 首先尝试加载.env文件
 	LoadEnv()
 
+	// 解析Redis DB值
+	redisDB := 0
+	if dbStr := getEnv("REDIS_DB", "0"); dbStr != "" {
+		if parsed, err := strconv.Atoi(dbStr); err == nil {
+			redisDB = parsed
+		}
+	}
+
 	return &Config{
 		DB: DBConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -91,6 +109,12 @@ func New() *Config {
 			Password: getEnv("DB_PASSWORD", "postgres"),
 			Name:     getEnv("DB_NAME", "memoir"),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		},
+		Redis: RedisConfig{
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       redisDB,
 		},
 	}
 }

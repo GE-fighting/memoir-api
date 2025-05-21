@@ -1,14 +1,19 @@
 package aliyun
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	sts20150401 "github.com/alibabacloud-go/sts-20150401/v2/client"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
+
+	"memoir-api/internal/cache"
 )
 
 // STSConfig holds the configuration for Aliyun STS token generation
@@ -65,7 +70,18 @@ func GetSTSConfig() (*STSConfig, error) {
 
 // GenerateSTSToken generates a temporary STS token for OSS access
 // userID is used to scope the token to a specific user's directory
-func GenerateSTSToken(userID string) (*STSToken, error) {
+func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
+
+	//1、从redis中获取sts token
+	stsToken, err := GetSTSTokenFromRedis(ctx, userID)
+	if err != nil {
+		log.Printf("从Redis获取STS令牌失败: %v", err)
+	}
+	if stsToken != nil {
+		log.Printf("从Redis获取STS令牌成功: %v", stsToken)
+		return stsToken, nil
+	}
+
 	log.Printf("开始为用户 %s 生成STS令牌...", userID)
 
 	config, err := GetSTSConfig()
@@ -130,6 +146,12 @@ func GenerateSTSToken(userID string) (*STSToken, error) {
 	}
 
 	log.Println("STS令牌生成成功，过期时间:", *credentials.Expiration)
+
+	//2、将sts token存入redis中
+	err = SetSTSTokenToRedis(ctx, userID, token)
+	if err != nil {
+		log.Printf("将STS令牌存入Redis失败: %v", err)
+	}
 	return token, nil
 }
 
@@ -170,4 +192,21 @@ func maskString(s string) string {
 	return s[:2] + "****" + s[len(s)-2:]
 }
 
-//TODO sts 有有效期，可以生成之后存入redis中，如果有就不用每次生成新的，如果redis没有，则生成新的
+func GetSTSTokenFromRedis(ctx context.Context, userID string) (*STSToken, error) {
+	//TODO 从redis中获取sts token
+	stsTokenStr, err := cache.GetRedisClient().Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	stsToken := &STSToken{}
+	err = json.Unmarshal([]byte(stsTokenStr), stsToken)
+	if err != nil {
+		return nil, err
+	}
+	return stsToken, nil
+}
+
+func SetSTSTokenToRedis(ctx context.Context, userID string, stsToken *STSToken) error {
+	//TODO 将sts token存入redis中
+	return cache.GetRedisClient().Set(ctx, userID, stsToken, 3600*time.Second)
+}

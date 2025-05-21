@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"memoir-api/internal/api"
+	"memoir-api/internal/cache"
 	"memoir-api/internal/config"
 	"memoir-api/internal/db"
 	"memoir-api/internal/logger"
@@ -54,6 +55,19 @@ func main() {
 	if err := autoMigrateDB(dbConn); err != nil {
 		logger.Fatal(err, "Failed to migrate database")
 	}
+
+	// Initialize Redis
+	if err := cache.Init(cfg); err != nil {
+		logger.Fatal(err, "Failed to initialize Redis")
+	}
+	// Ensure Redis connection is closed on exit
+	defer func() {
+		if err := cache.Close(); err != nil {
+			logger.Error(err, "Error closing Redis connection")
+		} else {
+			logger.Info("Redis connection closed")
+		}
+	}()
 
 	// Initialize repositories
 	repoFactory := repository.NewFactory(dbConn)
