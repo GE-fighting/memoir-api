@@ -41,7 +41,7 @@ const (
 
 // Base 包含所有模型共享的基础字段
 type Base struct {
-	ID        int64          `json:"id" gorm:"primaryKey"`
+	ID        int64          `json:"id,string" gorm:"primaryKey"`
 	CreatedAt time.Time      `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt time.Time      `json:"updated_at" gorm:"not null;default:now()"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
@@ -71,7 +71,7 @@ type Couple struct {
 // User 用户信息，包含深色模式字段
 type User struct {
 	Base
-	CoupleID     int64  `json:"couple_id" gorm:""`
+	CoupleID     int64  `json:"couple_id,string" gorm:""`
 	Username     string `json:"username" gorm:"type:varchar(50);not null;index:users_email_key"`
 	Email        string `json:"email" gorm:"type:varchar(100);not null;index:users_username_key"`
 	PasswordHash string `json:"-" gorm:"type:varchar(255);not null"`
@@ -131,7 +131,7 @@ func (p *Point) Scan(src interface{}) error {
 // Location 地点
 type Location struct {
 	Base
-	CoupleID    int64           `json:"couple_id" gorm:"not null"`
+	CoupleID    int64           `json:"couple_id,string" gorm:"not null"`
 	Name        string          `json:"name" gorm:"type:varchar(100);not null"`
 	Coordinates Point           `json:"coordinates" gorm:"type:geometry(Point,4326);not null"`
 	Description json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
@@ -145,11 +145,11 @@ type Location struct {
 // TimelineEvent 时间轴事件
 type TimelineEvent struct {
 	Base
-	CoupleID    int64           `json:"couple_id" gorm:"not null"`
+	CoupleID    int64           `json:"couple_id,string" gorm:"not null"`
 	EventDate   time.Time       `json:"event_date" gorm:"type:date;not null"`
 	Title       string          `json:"title" gorm:"type:varchar(100);not null"`
 	Description json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
-	LocationID  *int64          `json:"location_id,omitempty"`
+	LocationID  *int64          `json:"location_id,string,omitempty"`
 
 	// 关联 - 没有外键约束
 	Couple       Couple       `json:"-" gorm:"-"`
@@ -160,14 +160,14 @@ type TimelineEvent struct {
 // PhotoVideo 照片和视频
 type PhotoVideo struct {
 	Base
-	CoupleID     int64           `json:"couple_id" gorm:"not null"`
+	CoupleID     int64           `json:"couple_id,string" gorm:"not null"`
 	MediaURL     string          `json:"media_url" gorm:"type:text;not null"`
 	MediaType    string          `json:"media_type" gorm:"type:varchar(10);not null"` // 'photo' or 'video'
 	Category     string          `json:"category" gorm:"type:varchar(50);not null"`   // 'date', 'travel', 'daily'
 	ThumbnailURL *string         `json:"thumbnail_url,omitempty" gorm:"type:text"`
 	Description  json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
-	EventID      *int64          `json:"event_id,omitempty"`
-	LocationID   *int64          `json:"location_id,omitempty"`
+	EventID      *int64          `json:"event_id,string,omitempty"`
+	LocationID   *int64          `json:"location_id,string,omitempty"`
 
 	// 关联 - 没有外键约束
 	Couple   Couple         `json:"-" gorm:"-"`
@@ -178,7 +178,7 @@ type PhotoVideo struct {
 // PersonalMedia 个人空间的照片、视频和其他内容
 type PersonalMedia struct {
 	Base
-	UserID       int64           `json:"user_id" gorm:"not null;index"` // 关键区别：属于单个用户
+	UserID       int64           `json:"user_id,string" gorm:"not null;index"` // 关键区别：属于单个用户
 	MediaURL     string          `json:"media_url" gorm:"type:text;not null"`
 	MediaType    string          `json:"media_type" gorm:"type:varchar(10);not null"` // 'photo' or 'video'
 	Category     string          `json:"category" gorm:"type:varchar(50);not null"`   // 'photos', 'videos', 'notes', 'favorites'
@@ -196,7 +196,7 @@ type PersonalMedia struct {
 // Wishlist 心愿清单
 type Wishlist struct {
 	Base
-	CoupleID     int64           `json:"couple_id" gorm:"not null"`
+	CoupleID     int64           `json:"couple_id,string" gorm:"not null"`
 	Title        string          `json:"title" gorm:"type:varchar(100);not null"`
 	Description  json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
 	Priority     int             `json:"priority" gorm:"not null;default:2"`                        // 1-高，2-中，3-低

@@ -1,7 +1,6 @@
 package aliyun
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +19,7 @@ type STSConfig struct {
 	SessionName     string
 	RegionID        string
 	BucketName      string
+	UsePolicy       bool // 控制是否使用Policy参数
 }
 
 // STSToken represents the token response structure
@@ -41,9 +41,10 @@ func GetSTSConfig() (*STSConfig, error) {
 	roleArn := os.Getenv("ALIYUN_ROLE_ARN")
 	regionID := os.Getenv("ALIYUN_REGION_ID")
 	bucketName := os.Getenv("ALIYUN_BUCKET_NAME")
+	usePolicy := os.Getenv("ALIYUN_USE_POLICY") == "true" // 默认不使用Policy
 
-	log.Printf("环境变量检查: ALIYUN_ACCESS_KEY_ID=%s, ALIYUN_ROLE_ARN=%s, ALIYUN_REGION_ID=%s, ALIYUN_BUCKET_NAME=%s",
-		maskString(accessKeyID), roleArn, regionID, bucketName)
+	log.Printf("环境变量检查: ALIYUN_ACCESS_KEY_ID=%s, ALIYUN_ROLE_ARN=%s, ALIYUN_REGION_ID=%s, ALIYUN_BUCKET_NAME=%s, ALIYUN_USE_POLICY=%v",
+		maskString(accessKeyID), roleArn, regionID, bucketName, usePolicy)
 
 	if accessKeyID == "" || accessKeySecret == "" || roleArn == "" || regionID == "" || bucketName == "" {
 		log.Println("错误: 缺少必需的环境变量")
@@ -58,6 +59,7 @@ func GetSTSConfig() (*STSConfig, error) {
 		SessionName:     "memoir-session", // Fixed session name
 		RegionID:        regionID,
 		BucketName:      bucketName,
+		UsePolicy:       usePolicy,
 	}, nil
 }
 
@@ -90,17 +92,20 @@ func GenerateSTSToken(userID string) (*STSToken, error) {
 		return nil, fmt.Errorf("failed to create STS client: %w", err)
 	}
 
-	// 创建策略
-	log.Println("生成访问策略...")
-	policy := generatePolicy(config.BucketName, userID)
-	log.Printf("生成的策略: %s", policy)
-
 	// 创建AssumeRole请求
 	request := &sts20150401.AssumeRoleRequest{
 		RoleArn:         tea.String(config.RoleArn),
 		RoleSessionName: tea.String(config.SessionName),
 		DurationSeconds: tea.Int64(3600), // 1小时
-		// Policy:          tea.String(policy),
+	}
+
+	// 如果需要使用Policy，则生成并设置
+	if config.UsePolicy {
+		policyStr := generatePolicy(config.BucketName, userID)
+		log.Printf("使用策略: %s", policyStr)
+		request.Policy = tea.String(policyStr)
+	} else {
+		log.Println("不使用策略，依赖RAM角色权限")
 	}
 
 	// 发送请求
@@ -132,35 +137,29 @@ func GenerateSTSToken(userID string) (*STSToken, error) {
 func generatePolicy(bucket, userID string) string {
 	log.Printf("为用户 %s 在存储桶 %s 生成策略...", userID, bucket)
 
-	// Base path for the user
-	resourcePath := fmt.Sprintf("acs:oss:*:*:%s/%s", bucket, userID)
-	log.Printf("资源路径: %s", resourcePath)
+	// 直接使用字符串模板创建策略JSON
+	// 替换examplebucket/src/*为实际的bucket/userID/*
 
-	// Allow only putting objects in the user's path
-	policyDocument := map[string]interface{}{
-		"Version": "1",
-		"Statement": []map[string]interface{}{
-			{
-				"Effect": "Allow",
-				"Action": []string{
-					"oss:*",
-				},
-				"Resource": []string{
-					fmt.Sprintf("%s/*", resourcePath),
-				},
-			},
-		},
-	}
+	resourcePath_1 := fmt.Sprintf("acs:oss:*:*:%s/%s/*", bucket, userID)
+	log.Printf("资源路径: %s", resourcePath_1)
 
-	// Convert policy to JSON
-	policyJSON, err := json.Marshal(policyDocument)
-	if err != nil {
-		log.Printf("策略JSON序列化失败: %v", err)
-		// If marshaling fails, return an empty policy
-		return ""
-	}
+	policyStr := fmt.Sprintf(`{
+    "Version": "1", 
+    "Statement": [
+        {
+            "Action": [
+                "oss:PutObject"
+            ], 
+            "Resource": [
+                "%s"
+            ], 
+            "Effect": "Allow"
+        }
+    ]
+}`, resourcePath_1)
 
-	return string(policyJSON)
+	log.Printf("完整策略JSON: %s", policyStr)
+	return policyStr
 }
 
 // 工具函数，用于屏蔽敏感信息
@@ -170,3 +169,5 @@ func maskString(s string) string {
 	}
 	return s[:2] + "****" + s[len(s)-2:]
 }
+
+//TODO sts 有有效期，可以生成之后存入redis中，如果有就不用每次生成新的，如果redis没有，则生成新的
