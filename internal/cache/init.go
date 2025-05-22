@@ -22,7 +22,7 @@ func Init(cfg *config.Config) error {
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,
 		}
-
+		log.Printf("Redis配置: %+v", redisCfg)
 		redisClient, err = NewRedis(redisCfg)
 		if err != nil {
 			log.Printf("Redis初始化失败: %v", err)

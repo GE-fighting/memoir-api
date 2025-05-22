@@ -24,7 +24,6 @@ type STSConfig struct {
 	SessionName     string
 	RegionID        string
 	BucketName      string
-	UsePolicy       bool // 控制是否使用Policy参数
 }
 
 // STSToken represents the token response structure
@@ -46,10 +45,9 @@ func GetSTSConfig() (*STSConfig, error) {
 	roleArn := os.Getenv("ALIYUN_ROLE_ARN")
 	regionID := os.Getenv("ALIYUN_REGION_ID")
 	bucketName := os.Getenv("ALIYUN_BUCKET_NAME")
-	usePolicy := os.Getenv("ALIYUN_USE_POLICY") == "true" // 默认不使用Policy
 
-	log.Printf("环境变量检查: ALIYUN_ACCESS_KEY_ID=%s, ALIYUN_ROLE_ARN=%s, ALIYUN_REGION_ID=%s, ALIYUN_BUCKET_NAME=%s, ALIYUN_USE_POLICY=%v",
-		maskString(accessKeyID), roleArn, regionID, bucketName, usePolicy)
+	log.Printf("环境变量检查: ALIYUN_ACCESS_KEY_ID=%s, ALIYUN_ROLE_ARN=%s, ALIYUN_REGION_ID=%s, ALIYUN_BUCKET_NAME=%s",
+		maskString(accessKeyID), roleArn, regionID, bucketName)
 
 	if accessKeyID == "" || accessKeySecret == "" || roleArn == "" || regionID == "" || bucketName == "" {
 		log.Println("错误: 缺少必需的环境变量")
@@ -64,7 +62,6 @@ func GetSTSConfig() (*STSConfig, error) {
 		SessionName:     "memoir-session", // Fixed session name
 		RegionID:        regionID,
 		BucketName:      bucketName,
-		UsePolicy:       usePolicy,
 	}, nil
 }
 
@@ -109,19 +106,12 @@ func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
 	}
 
 	// 创建AssumeRole请求
+	policyStr := generatePolicy(config.BucketName, userID)
 	request := &sts20150401.AssumeRoleRequest{
 		RoleArn:         tea.String(config.RoleArn),
 		RoleSessionName: tea.String(config.SessionName),
 		DurationSeconds: tea.Int64(3600), // 1小时
-	}
-
-	// 如果需要使用Policy，则生成并设置
-	if config.UsePolicy {
-		policyStr := generatePolicy(config.BucketName, userID)
-		log.Printf("使用策略: %s", policyStr)
-		request.Policy = tea.String(policyStr)
-	} else {
-		log.Println("不使用策略，依赖RAM角色权限")
+		Policy:          tea.String(policyStr),
 	}
 
 	// 发送请求
@@ -162,8 +152,8 @@ func generatePolicy(bucket, userID string) string {
 	// 直接使用字符串模板创建策略JSON
 	// 替换examplebucket/src/*为实际的bucket/userID/*
 
-	resourcePath_1 := fmt.Sprintf("acs:oss:*:*:%s/%s/*", bucket, userID)
-	log.Printf("资源路径: %s", resourcePath_1)
+	resourcePath := fmt.Sprintf("acs:oss:*:*:%s/%s/*", bucket, userID)
+	log.Printf("资源路径: %s", resourcePath)
 
 	policyStr := fmt.Sprintf(`{
     "Version": "1", 
@@ -178,7 +168,7 @@ func generatePolicy(bucket, userID string) string {
             "Effect": "Allow"
         }
     ]
-}`, resourcePath_1)
+}`, resourcePath)
 
 	log.Printf("完整策略JSON: %s", policyStr)
 	return policyStr

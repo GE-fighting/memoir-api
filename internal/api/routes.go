@@ -2,6 +2,7 @@ package api
 
 import (
 	"memoir-api/internal/api/middleware"
+	"memoir-api/internal/config"
 	"memoir-api/internal/handlers"
 	"memoir-api/internal/service"
 
@@ -10,9 +11,9 @@ import (
 )
 
 // RegisterRoutes registers all API routes to the given router
-func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB) {
+func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, cfg *config.Config) {
 	// Apply middleware
-	middleware.ApplyMiddleware(router)
+	middleware.ApplyMiddleware(router, cfg)
 
 	// Health check
 	router.GET("/health", handlers.HealthCheckHandler(db))

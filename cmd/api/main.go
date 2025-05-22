@@ -23,14 +23,15 @@ import (
 )
 
 func main() {
-	// Initialize logger
-	logger.Initialize(os.Getenv("LOG_LEVEL"))
 
 	// Load configuration
 	cfg := config.New()
 
+	// Initialize logger
+	logger.Initialize(cfg.Server.LogLevel)
+
 	// Set Gin mode based on environment
-	if os.Getenv("GIN_MODE") == "release" {
+	if cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -78,21 +79,21 @@ func main() {
 	// Setup Gin router
 	router := gin.Default()
 
-	// Apply middleware
-	api.ApplyMiddleware(router)
-
 	// Register API routes
-	api.RegisterRoutes(router, serviceFactory, dbConn)
+	api.RegisterRoutes(router, serviceFactory, dbConn, cfg)
 
 	// Create HTTP server
 	srv := &http.Server{
-		Addr:    ":50001",
-		Handler: router,
+		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
+		Handler:      router,
+		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.Server.IdleTimeout) * time.Second,
 	}
 
 	// Start server in a goroutine
 	go func() {
-		logger.Info("Starting Memoir API server on port 50000...")
+		logger.Info(fmt.Sprintf("Starting Memoir API server on port %d...", cfg.Server.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal(err, "Failed to start server")
 		}

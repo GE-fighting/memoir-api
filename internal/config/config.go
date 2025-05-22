@@ -12,8 +12,9 @@ import (
 
 // Config 存储应用程序配置
 type Config struct {
-	DB    DBConfig
-	Redis RedisConfig
+	DB     DBConfig
+	Redis  RedisConfig
+	Server ServerConfig
 }
 
 // DBConfig 存储数据库配置
@@ -32,6 +33,20 @@ type RedisConfig struct {
 	Port     string
 	Password string
 	DB       int
+}
+
+// ServerConfig 服务配置
+type ServerConfig struct {
+	Port         int    // 服务监听端口
+	Host         string // 绑定地址，如 "0.0.0.0" 或 "localhost"
+	ReadTimeout  int    // HTTP读取超时时间(秒)
+	WriteTimeout int    // HTTP写入超时时间(秒)
+	IdleTimeout  int    // 保持连接超时时间(秒)
+	Mode         string // 运行模式：development, production
+	LogLevel     string // 日志级别
+	MaxBodySize  int64  // 最大请求体大小(字节)
+	JWTSecret    string // JWT密钥(如果使用JWT认证)
+	JWTExpire    int    // JWT过期时间(小时)
 }
 
 // ConnectionString 返回数据库连接字符串
@@ -116,6 +131,18 @@ func New() *Config {
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       redisDB,
 		},
+		Server: ServerConfig{
+			Port:         getEnvInt("SERVER_PORT", "5000"),
+			Host:         getEnv("SERVER_HOST", "0.0.0.0"),
+			Mode:         getEnv("SERVER_MODE", "debug"),
+			ReadTimeout:  getEnvInt("SERVER_READTIMEOUT", "10"),
+			WriteTimeout: getEnvInt("SERVER_WRITETIMEOUT", "30"),
+			IdleTimeout:  getEnvInt("SERVER_IDLETIMEOUT", "60"),
+			LogLevel:     getEnv("SERVER_LOGLEVEL", "debug"),
+			MaxBodySize:  getEnvInt64("SERVER_MAXBODYSIZE", "10485760"), // 默认10MB
+			JWTSecret:    getEnv("SERVER_JWTSECRET", ""),
+			JWTExpire:    getEnvInt("SERVER_JWTEXPIRE", "24"),
+		},
 	}
 }
 
@@ -125,4 +152,22 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func getEnvInt(key, defaultValue string) int {
+	valStr := getEnv(key, defaultValue)
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return 0 // 或者返回你想要的默认值，比如 10
+	}
+	return val
+}
+
+func getEnvInt64(key, defaultValue string) int64 {
+	valStr := getEnv(key, defaultValue)
+	val, err := strconv.ParseInt(valStr, 10, 64)
+	if err != nil {
+		return 0 // 或者返回你想要的默认值，比如 10485760
+	}
+	return val
 }

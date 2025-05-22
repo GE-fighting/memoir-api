@@ -1,21 +1,14 @@
-package errors
+package api
 
 import (
 	"errors"
+	"memoir-api/internal/api/dto"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// ErrorResponse represents a standardized API error response
-type ErrorResponse struct {
-	Status  int    `json:"-"`                 // HTTP status code
-	Code    string `json:"code"`              // Error code for clients
-	Message string `json:"message"`           // User-friendly error message
-	Details any    `json:"details,omitempty"` // Optional additional details
-}
-
-// Common error codes
+// Error codes
 const (
 	ErrCodeBadRequest          = "BAD_REQUEST"
 	ErrCodeUnauthorized        = "UNAUTHORIZED"
@@ -27,7 +20,7 @@ const (
 	ErrCodeResourceUnavailable = "RESOURCE_UNAVAILABLE"
 )
 
-// Common application errors
+// Error variables
 var (
 	ErrInvalidInput        = errors.New("invalid input")
 	ErrUnauthorized        = errors.New("unauthorized")
@@ -39,44 +32,26 @@ var (
 	ErrResourceUnavailable = errors.New("resource unavailable")
 )
 
-// NewErrorResponse creates a new error response with the given parameters
-func NewErrorResponse(status int, code, message string, details any) ErrorResponse {
-	return ErrorResponse{
-		Status:  status,
-		Code:    code,
-		Message: message,
-		Details: details,
-	}
-}
-
-// HandleError sends an appropriate error response based on the error type
-func HandleError(c *gin.Context, err error, details ...any) {
-	var detail any
-	if len(details) > 0 {
-		detail = details[0]
-	}
-
-	var response ErrorResponse
-
+// HandleError function
+func HandleError(c *gin.Context, err error) {
+	var response dto.Response
 	switch {
 	case errors.Is(err, ErrInvalidInput):
-		response = NewErrorResponse(http.StatusBadRequest, ErrCodeBadRequest, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusBadRequest, ErrCodeBadRequest, err.Error())
 	case errors.Is(err, ErrUnauthorized):
-		response = NewErrorResponse(http.StatusUnauthorized, ErrCodeUnauthorized, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusUnauthorized, ErrCodeUnauthorized, err.Error())
 	case errors.Is(err, ErrForbidden):
-		response = NewErrorResponse(http.StatusForbidden, ErrCodeForbidden, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusForbidden, ErrCodeForbidden, err.Error())
 	case errors.Is(err, ErrNotFound):
-		response = NewErrorResponse(http.StatusNotFound, ErrCodeNotFound, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusNotFound, ErrCodeNotFound, err.Error())
 	case errors.Is(err, ErrConflict):
-		response = NewErrorResponse(http.StatusConflict, ErrCodeConflict, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusConflict, ErrCodeConflict, err.Error())
 	case errors.Is(err, ErrValidation):
-		response = NewErrorResponse(http.StatusBadRequest, ErrCodeValidation, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusBadRequest, ErrCodeValidation, err.Error())
 	case errors.Is(err, ErrResourceUnavailable):
-		response = NewErrorResponse(http.StatusServiceUnavailable, ErrCodeResourceUnavailable, err.Error(), detail)
+		response = dto.NewErrorResponse(http.StatusServiceUnavailable, ErrCodeResourceUnavailable, err.Error())
 	default:
-		// Log unexpected errors but don't expose details to clients
-		response = NewErrorResponse(http.StatusInternalServerError, ErrCodeInternalServer, "An unexpected error occurred", nil)
+		response = dto.NewErrorResponse(http.StatusInternalServerError, ErrCodeInternalServer, "An unexpected error occurred")
 	}
-
-	c.JSON(response.Status, response)
+	c.JSON(response.Code, response)
 }

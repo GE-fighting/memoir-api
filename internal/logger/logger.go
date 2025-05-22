@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -22,10 +23,16 @@ func Initialize(level string) {
 	output := zerolog.ConsoleWriter{
 		Out:        os.Stdout,
 		TimeFormat: time.RFC3339,
+		FormatCaller: func(i interface{}) string {
+			if i == nil {
+				return ""
+			}
+			return fmt.Sprintf(" %s", i)
+		},
 	}
 
 	// Set global logger
-	log.Logger = zerolog.New(output).With().Timestamp().Caller().Logger()
+	log.Logger = zerolog.New(output).With().Timestamp().CallerWithSkipFrameCount(3).Logger()
 }
 
 // GetLogger creates a logger with component context

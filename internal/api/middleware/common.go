@@ -3,13 +3,16 @@ package middleware
 import (
 	"time"
 
+	"memoir-api/internal/config"
+	"net/http"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
 // ApplyMiddleware applies all middleware to the given router
-func ApplyMiddleware(router *gin.Engine) {
+func ApplyMiddleware(router *gin.Engine, cfg *config.Config) {
 	// Apply recovery and error middleware
 	router.Use(ErrorMiddleware())
 
@@ -21,6 +24,9 @@ func ApplyMiddleware(router *gin.Engine) {
 
 	// Apply request ID middleware
 	router.Use(RequestIDMiddleware())
+
+	// Apply body size limiting middleware
+	router.Use(BodySizeLimitMiddleware(cfg.Server.MaxBodySize))
 }
 
 // LoggerMiddleware logs HTTP requests with details
@@ -112,4 +118,12 @@ func randomString(length int) string {
 		time.Sleep(1 * time.Nanosecond)
 	}
 	return string(result)
+}
+
+// BodySizeLimitMiddleware adds a body size limit to each request
+func BodySizeLimitMiddleware(maxSize int64) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxSize)
+		c.Next()
+	}
 }
