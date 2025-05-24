@@ -39,13 +39,6 @@ func NewCoupleService(
 
 // CreateCouple 创建情侣关系
 func (s *coupleService) CreateCouple(ctx context.Context, couple *models.Couple) (*models.Couple, error) {
-	// 设置默认值
-	if couple.TimelinePrivacy == "" {
-		couple.TimelinePrivacy = models.PrivacyPublic
-	}
-	if couple.AlbumPrivacy == "" {
-		couple.AlbumPrivacy = models.PrivacyPublic
-	}
 
 	// 默认开启自动生成视频和提醒
 	couple.AutoGenerateVideo = true

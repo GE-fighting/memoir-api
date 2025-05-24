@@ -88,10 +88,8 @@ func (s *userService) Register(ctx context.Context, username, email, password, p
 		if couple == nil {
 			couple = &models.Couple{
 				PairToken:             pairToken,
-				TimelinePrivacy:       models.PrivacyPublic, // 默认公开
-				AlbumPrivacy:          models.PrivacyPublic, // 默认公开
-				AutoGenerateVideo:     true,                 // 默认开启
-				ReminderNotifications: true,                 // 默认开启
+				AutoGenerateVideo:     true, // 默认开启
+				ReminderNotifications: true, // 默认开启
 			}
 			if err := s.coupleRepo.Create(ctx, couple); err != nil {
 				return nil, fmt.Errorf("创建情侣关系失败: %w", err)

@@ -91,10 +91,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	personalMediaRoutes := protected.Group("/personal-media")
 	{
 		personalMediaRoutes.POST("/url", handlers.CreatePersonalMediaWithURLHandler(services))
-		personalMediaRoutes.GET("", handlers.QueryPersonalMediaHandler(services))
-		personalMediaRoutes.GET("/:id", handlers.GetPersonalMediaByIDHandler(services))
-		personalMediaRoutes.PUT("/:id", handlers.UpdatePersonalMediaHandler(services))
-		personalMediaRoutes.DELETE("/:id", handlers.DeletePersonalMediaHandler(services))
+		personalMediaRoutes.POST("/page", handlers.PageQueryPersonalMediaHandler(services))
 	}
 
 	// Wishlist routes

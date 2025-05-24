@@ -38,10 +38,7 @@ func (h *CoupleHandler) CreateCouple(c *gin.Context) {
 		return
 	}
 
-	couple := &models.Couple{
-		TimelinePrivacy: req.TimelinePrivacy,
-		AlbumPrivacy:    req.AlbumPrivacy,
-	}
+	couple := &models.Couple{}
 
 	if req.AutoGenerateVideo != nil {
 		couple.AutoGenerateVideo = *req.AutoGenerateVideo
@@ -114,12 +111,7 @@ func (h *CoupleHandler) UpdateCouple(c *gin.Context) {
 	}
 
 	// 更新情侣关系
-	if req.TimelinePrivacy != "" {
-		couple.TimelinePrivacy = req.TimelinePrivacy
-	}
-	if req.AlbumPrivacy != "" {
-		couple.AlbumPrivacy = req.AlbumPrivacy
-	}
+
 	if req.AutoGenerateVideo != nil {
 		couple.AutoGenerateVideo = *req.AutoGenerateVideo
 	}

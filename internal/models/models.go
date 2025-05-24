@@ -10,35 +10,6 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// 常量定义
-const (
-	// 隐私设置
-	PrivacyPublic  = "public"
-	PrivacyPrivate = "private"
-
-	// 媒体类型
-	MediaTypePhoto = "photo"
-	MediaTypeVideo = "video"
-
-	// 媒体分类
-	CategoryDate   = "date"
-	CategoryTravel = "travel"
-	CategoryDaily  = "daily"
-
-	// 个人媒体分类
-	PersonalCategoryPhoto = "photos"
-	PersonalCategoryVideo = "videos"
-
-	// 心愿清单优先级
-	PriorityHigh   = 1
-	PriorityMedium = 2
-	PriorityLow    = 3
-
-	// 心愿清单状态
-	StatusPending   = "pending"
-	StatusCompleted = "completed"
-)
-
 // Base 包含所有模型共享的基础字段
 type Base struct {
 	ID        int64          `json:"id,string" gorm:"primaryKey"`
@@ -58,8 +29,6 @@ func (b *Base) BeforeCreate(tx *gorm.DB) error {
 // Couple 情侣关系，包含设置字段
 type Couple struct {
 	Base
-	TimelinePrivacy       string `json:"timeline_privacy" gorm:"type:varchar(20);not null;default:'public'"`
-	AlbumPrivacy          string `json:"album_privacy" gorm:"type:varchar(20);not null;default:'public'"`
 	AutoGenerateVideo     bool   `json:"auto_generate_video" gorm:"not null;default:true"`
 	ReminderNotifications bool   `json:"reminder_notifications" gorm:"not null;default:true"`
 	PairToken             string `json:"pair_token" gorm:"type:varchar(50);uniqueIndex;not null"`
@@ -178,16 +147,13 @@ type PhotoVideo struct {
 // PersonalMedia 个人空间的照片、视频和其他内容
 type PersonalMedia struct {
 	Base
-	UserID       int64           `json:"user_id,string" gorm:"not null;index"` // 关键区别：属于单个用户
-	MediaURL     string          `json:"media_url" gorm:"type:text;not null"`
-	MediaType    string          `json:"media_type" gorm:"type:varchar(10);not null"` // 'photo' or 'video'
-	Category     string          `json:"category" gorm:"type:varchar(50);not null"`   // 'photos', 'videos', 'notes', 'favorites'
-	ThumbnailURL *string         `json:"thumbnail_url,omitempty" gorm:"type:text"`
-	Description  json.RawMessage `json:"description,omitempty" gorm:"type:jsonb"`
-	Title        string          `json:"title" gorm:"type:varchar(100)"`
-	IsPrivate    bool            `json:"is_private" gorm:"not null;default:true"`
-	Tags         []string        `json:"tags" gorm:"type:text[]"`
-	Path         string          `json:"path" gorm:"type:text"` // 文件在OSS中的完整路径，格式为 userId/年/月/日/文件名
+	UserID       int64   `json:"user_id,string" gorm:"not null;index"` // 关键区别：属于单个用户
+	MediaURL     string  `json:"media_url" gorm:"type:text;not null"`
+	MediaType    string  `json:"media_type" gorm:"type:varchar(10);not null"` // 'photo' or 'video'
+	Category     *string `json:"category" gorm:"type:varchar(50)"`            // 'photos', 'videos', 'notes', 'favorites'
+	ThumbnailURL *string `json:"thumbnail_url,omitempty" gorm:"type:text"`
+	Description  *string `json:"description,omitempty" gorm:"type:text"`
+	Title        *string `json:"title" gorm:"type:varchar(100)"`
 
 	// 关联
 	User User `json:"-" gorm:"-"`

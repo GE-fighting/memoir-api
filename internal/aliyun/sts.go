@@ -160,7 +160,9 @@ func generatePolicy(bucket, userID string) string {
     "Statement": [
         {
             "Action": [
-                "oss:PutObject"
+                "oss:PutObject",
+				"oss:GetObject",
+				"oss:DeleteObject"
             ], 
             "Resource": [
                 "%s"
