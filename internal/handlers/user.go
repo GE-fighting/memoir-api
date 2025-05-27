@@ -41,20 +41,13 @@ func GetCurrentUserHandler(services service.Factory) gin.HandlerFunc {
 	}
 }
 
-// UpdateUserHandler updates user information
-func UpdateUserHandler(services service.Factory) gin.HandlerFunc {
+func ExistCoupleHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement update user logic
-		response := dto.EmptySuccessResponse("Update user endpoint")
-		c.JSON(http.StatusOK, response)
-	}
-}
-
-// UpdateUserPreferencesHandler updates user preferences
-func UpdateUserPreferencesHandler(services service.Factory) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// TODO: Implement update user preferences logic
-		response := dto.EmptySuccessResponse("Update user preferences endpoint")
-		c.JSON(http.StatusOK, response)
+		exist, err := services.User().ExistCouple(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "获取情侣关系失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(exist, "获取情侣关系成功"))
 	}
 }

@@ -20,7 +20,7 @@ func ApplyMiddleware(router *gin.Engine, cfg *config.Config) {
 	router.Use(LoggerMiddleware())
 
 	// Apply CORS middleware
-	router.Use(CorsMiddleware())
+	router.Use(CorsMiddleware(cfg))
 
 	// Apply request ID middleware
 	router.Use(RequestIDMiddleware())
@@ -75,9 +75,9 @@ func LoggerMiddleware() gin.HandlerFunc {
 }
 
 // CorsMiddleware configures CORS settings
-func CorsMiddleware() gin.HandlerFunc {
+func CorsMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     cfg.Server.CorsOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"},
 		ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},

@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
 )
@@ -10,7 +12,7 @@ import (
 // CoupleService 情侣关系服务接口
 type CoupleService interface {
 	Service
-	CreateCouple(ctx context.Context, couple *models.Couple) (*models.Couple, error)
+	CreateCouple(ctx context.Context, req *dto.CreateCoupleRequest) (*models.Couple, error)
 	GetCoupleByID(ctx context.Context, id int64) (*models.Couple, error)
 	UpdateCouple(ctx context.Context, couple *models.Couple) error
 	DeleteCouple(ctx context.Context, id int64) error
@@ -38,18 +40,47 @@ func NewCoupleService(
 }
 
 // CreateCouple 创建情侣关系
-func (s *coupleService) CreateCouple(ctx context.Context, couple *models.Couple) (*models.Couple, error) {
+func (s *coupleService) CreateCouple(ctx context.Context, req *dto.CreateCoupleRequest) (*models.Couple, error) {
+	couple, err := req.ToCouple()
+	if err != nil {
+		return nil, err
+	}
 
 	// 默认开启自动生成视频和提醒
 	couple.AutoGenerateVideo = true
 	couple.ReminderNotifications = true
 
+	// 判断pair_token是否存在
+	existingCouple, err := s.coupleRepo.GetByPairToken(ctx, couple.PairToken)
+	if existingCouple != nil {
+		return nil, errors.New("pair_token already exists, please use another pair_token")
+	}
+	if err != nil {
+		if err != repository.ErrCoupleNotFound {
+			return nil, err
+		}
+	}
+
 	// 创建情侣关系
-	if err := s.coupleRepo.Create(ctx, couple); err != nil {
+	if err := s.coupleRepo.Create(ctx, &couple); err != nil {
 		return nil, err
 	}
 
-	return couple, nil
+	//获取用户id
+	userID, exists := ctx.Value("user_id").(int64)
+	if !exists {
+		return nil, errors.New("user_id not found")
+	}
+	//更新用户情侣id
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	user.CoupleID = couple.ID
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	return &couple, nil
 }
 
 // GetCoupleByID 通过ID获取情侣关系

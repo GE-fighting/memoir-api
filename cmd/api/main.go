@@ -137,6 +137,7 @@ func autoMigrateDB(db interface{}) error {
 		&models.PhotoVideo{},
 		&models.Wishlist{},
 		&models.PersonalMedia{},
+		&models.CoupleAlbum{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate tables: %w", err)
 	}

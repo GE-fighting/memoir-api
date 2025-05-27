@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -37,16 +38,17 @@ type RedisConfig struct {
 
 // ServerConfig 服务配置
 type ServerConfig struct {
-	Port         int    // 服务监听端口
-	Host         string // 绑定地址，如 "0.0.0.0" 或 "localhost"
-	ReadTimeout  int    // HTTP读取超时时间(秒)
-	WriteTimeout int    // HTTP写入超时时间(秒)
-	IdleTimeout  int    // 保持连接超时时间(秒)
-	Mode         string // 运行模式：development, production
-	LogLevel     string // 日志级别
-	MaxBodySize  int64  // 最大请求体大小(字节)
-	JWTSecret    string // JWT密钥(如果使用JWT认证)
-	JWTExpire    int    // JWT过期时间(小时)
+	Port         int      // 服务监听端口
+	Host         string   // 绑定地址，如 "0.0.0.0" 或 "localhost"
+	ReadTimeout  int      // HTTP读取超时时间(秒)
+	WriteTimeout int      // HTTP写入超时时间(秒)
+	IdleTimeout  int      // 保持连接超时时间(秒)
+	Mode         string   // 运行模式：development, production
+	LogLevel     string   // 日志级别
+	MaxBodySize  int64    // 最大请求体大小(字节)
+	JWTSecret    string   // JWT密钥(如果使用JWT认证)
+	JWTExpire    int      // JWT过期时间(小时)
+	CorsOrigins  []string // CORS允许的源
 }
 
 // ConnectionString 返回数据库连接字符串
@@ -116,6 +118,12 @@ func New() *Config {
 		}
 	}
 
+	// 解析CORS Origins
+	corsOrigins := []string{"http://localhost:3000"}
+	if originsStr := getEnv("CORS_ORIGINS", ""); originsStr != "" {
+		corsOrigins = append(corsOrigins, strings.Split(originsStr, ",")...)
+	}
+
 	return &Config{
 		DB: DBConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -142,6 +150,7 @@ func New() *Config {
 			MaxBodySize:  getEnvInt64("SERVER_MAXBODYSIZE", "10485760"), // 默认10MB
 			JWTSecret:    getEnv("SERVER_JWTSECRET", ""),
 			JWTExpire:    getEnvInt("SERVER_JWTEXPIRE", "24"),
+			CorsOrigins:  corsOrigins,
 		},
 	}
 }

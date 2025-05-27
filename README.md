@@ -140,3 +140,52 @@ psql -h <主机名> -p <端口> -U <用户名> -d memoir -f sql/drop_tables.sql
 
 本项目使用 GORM 的 `AutoMigrate` 功能进行自动数据库迁移，启动服务时会自动创建或更新表结构。这种方式适合开发环境，避免手动执行 SQL 脚本的麻烦。
 
+## CORS 配置
+
+为了解决跨域资源共享(CORS)问题，你需要在 `.env` 文件中配置允许的源。
+
+创建一个 `.env` 文件在项目根目录，添加以下内容：
+
+```
+# CORS配置
+# 多个源用逗号分隔
+CORS_ORIGINS=http://localhost:3000,http://172.28.24.190:3000
+```
+
+你可以根据需要添加更多的源。
+
+## 其他环境变量
+
+完整的环境变量配置示例：
+
+```
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=memoir
+DB_SSLMODE=disable
+
+# Redis配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# 服务器配置
+SERVER_PORT=5000
+SERVER_HOST=0.0.0.0
+SERVER_MODE=debug  # debug 或 release
+SERVER_READTIMEOUT=10
+SERVER_WRITETIMEOUT=30
+SERVER_IDLETIMEOUT=60
+SERVER_LOGLEVEL=debug  # debug, info, warn, error
+SERVER_MAXBODYSIZE=10485760  # 10MB
+SERVER_JWTSECRET=your_jwt_secret_here
+SERVER_JWTEXPIRE=24  # 小时
+
+# CORS配置
+CORS_ORIGINS=http://localhost:3000,http://172.28.24.190:3000
+```
+

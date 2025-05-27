@@ -13,6 +13,7 @@ type Factory interface {
 	PhotoVideo() PhotoVideoRepository
 	Wishlist() WishlistRepository
 	PersonalMedia() PersonalMediaRepository
+	CoupleAlbum() CoupleAlbumRepository
 	GetDB() *gorm.DB
 }
 
@@ -26,10 +27,12 @@ type factory struct {
 	photoVideoRepository    PhotoVideoRepository
 	wishlistRepository      WishlistRepository
 	personalMediaRepository PersonalMediaRepository
+	coupleAlbumRepository   CoupleAlbumRepository
 }
 
 // NewFactory 创建仓库工厂
 func NewFactory(db *gorm.DB) Factory {
+	baseRepo := NewBaseRepository(db)
 	return &factory{
 		db:                      db,
 		coupleRepository:        NewCoupleRepository(db),
@@ -39,6 +42,7 @@ func NewFactory(db *gorm.DB) Factory {
 		photoVideoRepository:    NewPhotoVideoRepository(db),
 		wishlistRepository:      NewWishlistRepository(db),
 		personalMediaRepository: NewGormPersonalMediaRepository(db),
+		coupleAlbumRepository:   NewCoupleAlbumRepository(baseRepo),
 	}
 }
 
@@ -75,6 +79,11 @@ func (f *factory) Wishlist() WishlistRepository {
 // PersonalMedia 获取个人媒体仓库
 func (f *factory) PersonalMedia() PersonalMediaRepository {
 	return f.personalMediaRepository
+}
+
+// CoupleAlbum 获取情侣相册仓库
+func (f *factory) CoupleAlbum() CoupleAlbumRepository {
+	return f.coupleAlbumRepository
 }
 
 // GetDB 获取数据库连接

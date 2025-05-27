@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
 )
@@ -16,7 +17,7 @@ var (
 // PhotoVideoService 照片和视频服务接口
 type PhotoVideoService interface {
 	Service
-	CreatePhotoVideo(ctx context.Context, photoVideo *models.PhotoVideo) (*models.PhotoVideo, error)
+	CreatePhotoVideo(ctx context.Context, dto *dto.CreatePhotoVideoRequest) (*models.PhotoVideo, error)
 	GetPhotoVideoByID(ctx context.Context, id int64) (*models.PhotoVideo, error)
 	ListPhotoVideosByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.PhotoVideo, int64, error)
 	ListPhotoVideosByCategory(ctx context.Context, coupleID int64, category string, offset, limit int) ([]*models.PhotoVideo, int64, error)
@@ -42,7 +43,8 @@ func NewPhotoVideoService(photoVideoRepo repository.PhotoVideoRepository) PhotoV
 }
 
 // CreatePhotoVideo 创建照片/视频
-func (s *photoVideoService) CreatePhotoVideo(ctx context.Context, photoVideo *models.PhotoVideo) (*models.PhotoVideo, error) {
+func (s *photoVideoService) CreatePhotoVideo(ctx context.Context, dto *dto.CreatePhotoVideoRequest) (*models.PhotoVideo, error) {
+	photoVideo := dto.ToModel()
 	if err := s.photoVideoRepo.Create(ctx, photoVideo); err != nil {
 		return nil, fmt.Errorf("创建照片/视频失败: %w", err)
 	}

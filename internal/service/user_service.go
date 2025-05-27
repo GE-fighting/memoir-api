@@ -32,6 +32,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, user *models.User) error
 	UpdatePassword(ctx context.Context, userID int64, oldPassword, newPassword string) error
 	DeleteUser(ctx context.Context, id int64) error
+	ExistCouple(ctx context.Context) (bool, error)
 }
 
 // userService 用户服务实现
@@ -204,4 +205,16 @@ func GeneratePairToken() string {
 		b[i] = charset[secureRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func (s *userService) ExistCouple(ctx context.Context) (bool, error) {
+	userID, exists := ctx.Value("user_id").(int64)
+	if !exists {
+		return false, errors.New("user_id not found")
+	}
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	return user.CoupleID != 0, nil
 }

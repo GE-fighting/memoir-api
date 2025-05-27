@@ -44,16 +44,13 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	userRoutes := protected.Group("/users")
 	{
 		userRoutes.GET("/me", handlers.GetCurrentUserHandler(services))
-		userRoutes.PUT("/me", handlers.UpdateUserHandler(services))
-		userRoutes.PUT("/preferences", handlers.UpdateUserPreferencesHandler(services))
+		userRoutes.GET("/exist-couple", handlers.ExistCoupleHandler(services))
 	}
 
 	// Couple routes
-	coupleRoutes := protected.Group("/couples")
+	coupleRoutes := protected.Group("/couple")
 	{
-		coupleRoutes.GET("/", handlers.GetCoupleHandler(services))
-		coupleRoutes.PUT("/", handlers.UpdateCoupleHandler(services))
-		coupleRoutes.PUT("/settings", handlers.UpdateCoupleSettingsHandler(services))
+		coupleRoutes.POST("/create", handlers.CreateCoupleHandler(services))
 	}
 
 	// Timeline event routes
@@ -79,11 +76,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Photos and videos routes
 	mediaRoutes := protected.Group("/media")
 	{
-		mediaRoutes.GET("/", handlers.ListMediaHandler(services))
-		mediaRoutes.POST("/", handlers.UploadMediaHandler(services))
-		mediaRoutes.GET("/:id", handlers.GetMediaHandler(services))
-		mediaRoutes.PUT("/:id", handlers.UpdateMediaHandler(services))
-		mediaRoutes.DELETE("/:id", handlers.DeleteMediaHandler(services))
+		mediaRoutes.POST("/create", handlers.UploadPhotoVideoHandler(services))
 	}
 
 	// 个人媒体路由
@@ -103,6 +96,17 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		wishlistRoutes.PUT("/:id", handlers.UpdateWishlistItemHandler(services))
 		wishlistRoutes.PUT("/:id/status", handlers.UpdateWishlistItemStatusHandler(services))
 		wishlistRoutes.DELETE("/:id", handlers.DeleteWishlistItemHandler(services))
+	}
+
+	// 情侣相册路由
+	albumRoutes := protected.Group("/albums")
+	{
+		albumRoutes.GET("/list", handlers.ListCoupleAlbumsHandler(services))
+		albumRoutes.POST("/create", handlers.CreateCoupleAlbumHandler(services))
+		albumRoutes.GET("/:id", handlers.GetCoupleAlbumHandler(services))
+		albumRoutes.GET("/:id/photos", handlers.GetCoupleAlbumWithPhotosHandler(services))
+		albumRoutes.PUT("/:id", handlers.UpdateCoupleAlbumHandler(services))
+		albumRoutes.DELETE("/:id", handlers.DeleteCoupleAlbumHandler(services))
 	}
 
 	// OSS (Aliyun Object Storage Service) routes

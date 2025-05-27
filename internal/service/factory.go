@@ -14,6 +14,7 @@ type Factory interface {
 	PhotoVideo() PhotoVideoService
 	Wishlist() WishlistService
 	PersonalMedia() PersonalMediaService
+	CoupleAlbum() CoupleAlbumService
 }
 
 // factory 服务工厂实现
@@ -26,6 +27,7 @@ type factory struct {
 	photoVideoService    PhotoVideoService
 	wishlistService      WishlistService
 	personalMediaService PersonalMediaService
+	coupleAlbumService   CoupleAlbumService
 }
 
 // NewFactory 创建服务工厂
@@ -41,6 +43,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo())
 	wishlistService := NewWishlistService(repoFactory.Wishlist())
 	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())
+	coupleAlbumService := NewCoupleAlbumService(repoFactory.CoupleAlbum(), userService)
 
 	return &factory{
 		userService:          userService,
@@ -51,6 +54,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 		photoVideoService:    photoVideoService,
 		wishlistService:      wishlistService,
 		personalMediaService: personalMediaService,
+		coupleAlbumService:   coupleAlbumService,
 	}
 }
 
@@ -92,4 +96,9 @@ func (f *factory) Wishlist() WishlistService {
 // PersonalMedia 获取个人媒体服务
 func (f *factory) PersonalMedia() PersonalMediaService {
 	return f.personalMediaService
+}
+
+// CoupleAlbum 获取情侣相册服务
+func (f *factory) CoupleAlbum() CoupleAlbumService {
+	return f.coupleAlbumService
 }
