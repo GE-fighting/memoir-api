@@ -28,6 +28,6 @@ func GenerateSTSToken(c *gin.Context) {
 		return
 	}
 
-	// Return token
-	c.JSON(http.StatusOK, dto.NewSuccessResponse(token, "STS令牌生成成功"))
+	// Return the token
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(token))
 }

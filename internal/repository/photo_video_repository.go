@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"memoir-api/internal/api/dto"
 
 	"memoir-api/internal/models"
 
@@ -18,11 +19,7 @@ type PhotoVideoRepository interface {
 	Repository
 	Create(ctx context.Context, photoVideo *models.PhotoVideo) error
 	GetByID(ctx context.Context, id int64) (*models.PhotoVideo, error)
-	ListByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListByCategory(ctx context.Context, coupleID int64, category string, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListByMediaType(ctx context.Context, coupleID int64, mediaType string, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListByEventID(ctx context.Context, eventID int64) ([]*models.PhotoVideo, error)
-	ListByLocationID(ctx context.Context, locationID int64) ([]*models.PhotoVideo, error)
+	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) ([]*models.PhotoVideo, int64, error)
 	Update(ctx context.Context, photoVideo *models.PhotoVideo) error
 	Delete(ctx context.Context, id int64) error
 }
@@ -30,6 +27,40 @@ type PhotoVideoRepository interface {
 // photoVideoRepository 照片和视频仓库实现
 type photoVideoRepository struct {
 	*BaseRepository
+}
+
+func (r *photoVideoRepository) Query(ctx context.Context, params *dto.PhotoVideoQueryParams) ([]*models.PhotoVideo, int64, error) {
+	db := r.DB().WithContext(ctx).Model(&models.PhotoVideo{}).Order("created_at DESC")
+	// 构建查询条件
+	if params.CoupleID != 0 {
+		db = db.Where("couple_id = ?", params.CoupleID)
+	}
+	if params.AlbumID != 0 {
+		db = db.Where("album_id = ?", params.AlbumID)
+	}
+	if params.MediaType != "" {
+		db = db.Where("media_type = ?", params.MediaType)
+	}
+	if params.EventID != 0 {
+		db = db.Where("event_id = ?", params.EventID)
+	}
+	if params.LocationID != 0 {
+		db = db.Where("location_id = ?", params.LocationID)
+	}
+	var total int64
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	limit, offset := params.Limit(), params.Limit()
+	if limit >= 0 && offset > 0 {
+		db = db.Offset(offset).Limit(limit)
+	}
+	var results []*models.PhotoVideo
+	if err := db.Find(&results).Error; err != nil {
+		return nil, 0, err
+	}
+	return results, total, nil
 }
 
 // NewPhotoVideoRepository 创建照片和视频仓库

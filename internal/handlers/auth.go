@@ -49,7 +49,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, dto.NewSuccessResponse(tokenResp, "注册成功"))
+	c.JSON(http.StatusCreated, dto.NewSuccessResponse(tokenResp))
 }
 
 // Login 用户登录
@@ -92,7 +92,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp, "登录成功"))
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp))
 }
 
 // 生成JWT令牌
@@ -152,5 +152,5 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp, "令牌刷新成功"))
+	c.JSON(http.StatusOK, dto.NewSuccessResponse(tokenResp))
 }

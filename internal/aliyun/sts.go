@@ -66,11 +66,11 @@ func GetSTSConfig() (*STSConfig, error) {
 }
 
 // GenerateSTSToken generates a temporary STS token for OSS access
-// userID is used to scope the token to a specific user's directory
-func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
+// ownerID is used to scope the token to a specific user's directory
+func GenerateSTSToken(ctx context.Context, ownerID string) (*STSToken, error) {
 
 	//1、从redis中获取sts token
-	stsToken, err := GetSTSTokenFromRedis(ctx, userID)
+	stsToken, err := GetSTSTokenFromRedis(ctx, ownerID)
 	if err != nil {
 		log.Printf("从Redis获取STS令牌失败: %v", err)
 	}
@@ -79,7 +79,7 @@ func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
 		return stsToken, nil
 	}
 
-	log.Printf("开始为用户 %s 生成STS令牌...", userID)
+	log.Printf("开始为用户 %s 生成STS令牌...", ownerID)
 
 	config, err := GetSTSConfig()
 	if err != nil {
@@ -106,7 +106,7 @@ func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
 	}
 
 	// 创建AssumeRole请求
-	policyStr := generatePolicy(config.BucketName, userID)
+	policyStr := generatePolicy(config.BucketName, ownerID)
 	request := &sts20150401.AssumeRoleRequest{
 		RoleArn:         tea.String(config.RoleArn),
 		RoleSessionName: tea.String(config.SessionName),
@@ -138,7 +138,7 @@ func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
 	log.Println("STS令牌生成成功，过期时间:", *credentials.Expiration)
 
 	//2、将sts token存入redis中
-	err = SetSTSTokenToRedis(ctx, userID, token)
+	err = SetSTSTokenToRedis(ctx, ownerID, token)
 	if err != nil {
 		log.Printf("将STS令牌存入Redis失败: %v", err)
 	}
@@ -146,13 +146,13 @@ func GenerateSTSToken(ctx context.Context, userID string) (*STSToken, error) {
 }
 
 // generatePolicy creates a policy document that restricts access to a specific user's path
-func generatePolicy(bucket, userID string) string {
-	log.Printf("为用户 %s 在存储桶 %s 生成策略...", userID, bucket)
+func generatePolicy(bucket, ownerID string) string {
+	log.Printf("为 %s 在存储桶 %s 生成策略...", ownerID, bucket)
 
 	// 直接使用字符串模板创建策略JSON
 	// 替换examplebucket/src/*为实际的bucket/userID/*
 
-	resourcePath := fmt.Sprintf("acs:oss:*:*:%s/%s/*", bucket, userID)
+	resourcePath := fmt.Sprintf("acs:oss:*:*:%s/%s/*", bucket, ownerID)
 	log.Printf("资源路径: %s", resourcePath)
 
 	policyStr := fmt.Sprintf(`{
@@ -184,9 +184,9 @@ func maskString(s string) string {
 	return s[:2] + "****" + s[len(s)-2:]
 }
 
-func GetSTSTokenFromRedis(ctx context.Context, userID string) (*STSToken, error) {
+func GetSTSTokenFromRedis(ctx context.Context, ownerID string) (*STSToken, error) {
 	//TODO 从redis中获取sts token
-	stsTokenStr, err := cache.GetRedisClient().Get(ctx, userID)
+	stsTokenStr, err := cache.GetRedisClient().Get(ctx, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func GetSTSTokenFromRedis(ctx context.Context, userID string) (*STSToken, error)
 	return stsToken, nil
 }
 
-func SetSTSTokenToRedis(ctx context.Context, userID string, stsToken *STSToken) error {
+func SetSTSTokenToRedis(ctx context.Context, ownerID string, stsToken *STSToken) error {
 	//TODO 将sts token存入redis中
-	return cache.GetRedisClient().Set(ctx, userID, stsToken, 3600*time.Second)
+	return cache.GetRedisClient().Set(ctx, ownerID, stsToken, 3600*time.Second)
 }

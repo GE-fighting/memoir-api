@@ -53,7 +53,7 @@ func HealthCheckHandler(db *gorm.DB) gin.HandlerFunc {
 			Version:   "1.0.0", // You might want to fetch this from a version package or env variable
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(response, "系统状态"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(response))
 	}
 }
 

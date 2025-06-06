@@ -36,18 +36,18 @@ func GetCurrentUserHandler(services service.Factory) gin.HandlerFunc {
 		}
 
 		// 返回用户信息
-		response := dto.NewSuccessResponse(user, "获取当前用户成功")
+		response := dto.NewSuccessResponse(user)
 		c.JSON(http.StatusOK, response)
 	}
 }
 
 func ExistCoupleHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		exist, err := services.User().ExistCouple(c.Request.Context())
+		exist, err := services.User().ExistCouple(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "获取情侣关系失败", err.Error()))
 			return
 		}
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(exist, "获取情侣关系成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(exist))
 	}
 }

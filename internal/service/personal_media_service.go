@@ -13,7 +13,7 @@ type PersonalMediaService interface {
 	// 通过URL创建个人媒体（前端直接上传到OSS）
 	CreateWithURL(ctx context.Context, request dto.CreatePersonalMediaWithURLRequest) (*models.PersonalMedia, error)
 	// 分页查询个人媒体
-	PageQuery(ctx context.Context, pageRequest dto.QueryPersonalMediaRequest) ([]models.PersonalMedia, int64, error)
+	PageQuery(ctx context.Context, pageRequest dto.QueryPersonalMediaRequest) (*dto.PageResult, error)
 }
 
 // DefaultPersonalMediaService 个人媒体服务的默认实现
@@ -51,6 +51,11 @@ func (s *DefaultPersonalMediaService) CreateWithURL(ctx context.Context, request
 }
 
 // 分页查询 查询个人媒体
-func (s *DefaultPersonalMediaService) PageQuery(ctx context.Context, pageRequest dto.QueryPersonalMediaRequest) ([]models.PersonalMedia, int64, error) {
-	return s.repo.Query(ctx, pageRequest)
+func (s *DefaultPersonalMediaService) PageQuery(ctx context.Context, pageRequest dto.QueryPersonalMediaRequest) (*dto.PageResult, error) {
+	data, total, err := s.repo.Query(ctx, pageRequest)
+	if err != nil {
+		return nil, err
+	}
+	result := dto.NewPageResult(data, total, pageRequest.Page, pageRequest.PageSize)
+	return &result, nil
 }

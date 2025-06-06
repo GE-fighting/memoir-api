@@ -97,8 +97,8 @@ func (r *GormPersonalMediaRepository) Query(ctx context.Context, pageRequest dto
 	}
 
 	// 分页查询
-	offset := pageRequest.GetOffset()
-	limit := pageRequest.GetLimit()
+	offset := pageRequest.Offset()
+	limit := pageRequest.Limit()
 	err = query.Offset(offset).Limit(limit).Order("created_at DESC").Find(&media).Error
 	if err != nil {
 		return nil, 0, err

@@ -33,6 +33,7 @@ type UserService interface {
 	UpdatePassword(ctx context.Context, userID int64, oldPassword, newPassword string) error
 	DeleteUser(ctx context.Context, id int64) error
 	ExistCouple(ctx context.Context) (bool, error)
+	GetCoupleID(ctx context.Context, userID int64) (int64, error)
 }
 
 // userService 用户服务实现
@@ -217,4 +218,19 @@ func (s *userService) ExistCouple(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	return user.CoupleID != 0, nil
+}
+
+func (s *userService) GetCoupleID(ctx context.Context, userID int64) (int64, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	if user.CoupleID == 0 {
+		return 0, errors.New("用户没有情侣关系")
+	}
+	couple, err := s.coupleRepo.GetByID(ctx, user.CoupleID)
+	if err != nil {
+		return 0, err
+	}
+	return couple.ID, nil
 }

@@ -10,9 +10,18 @@ type CreatePhotoVideoRequest struct {
 	ThumbnailURL string `json:"thumbnail_url" binding:"required"`
 	Description  string `json:"description"`
 	CoupleID     int64  `json:"couple_id"`
-	AlbumID      int64  `json:"album_id" binding:"required"`
-	EventID      *int64 `json:"event_id,omitempty"`
-	LocationID   *int64 `json:"location_id,omitempty"`
+	AlbumID      int64  `json:"album_id,string" binding:"required"`
+	EventID      *int64 `json:"event_id,string,omitempty"`
+	LocationID   *int64 `json:"location_id,string,omitempty"`
+}
+
+type PhotoVideoQueryParams struct {
+	PaginationRequest
+	CoupleID   int64  `form:"couple_id,string"`
+	AlbumID    int64  `form:"album_id,string"`
+	MediaType  string `form:"media_type" binding:"omitempty,oneof=photo video"`
+	EventID    int64  `form:"event_id,string"`
+	LocationID int64  `form:"location_id,string"`
 }
 
 func (r *CreatePhotoVideoRequest) ToModel() *models.PhotoVideo {

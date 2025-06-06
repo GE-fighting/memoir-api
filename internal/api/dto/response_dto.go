@@ -13,8 +13,8 @@ type Response struct {
 	Error   string      `json:"error,omitempty"`   // 错误信息（仅在Success为false时返回）
 }
 
-// PaginatedResponse 分页响应
-type PaginatedResponse struct {
+// PageResult分页结果
+type PageResult struct {
 	Data      interface{} `json:"data"`
 	Total     int64       `json:"total"`
 	Page      int         `json:"page"`
@@ -23,11 +23,11 @@ type PaginatedResponse struct {
 }
 
 // NewSuccessResponse 创建成功响应
-func NewSuccessResponse(data interface{}, message string) Response {
+func NewSuccessResponse(data interface{}) Response {
 	return Response{
 		Success: true,
 		Code:    200,
-		Message: message,
+		Message: "success",
 		Data:    data,
 	}
 }
@@ -51,12 +51,12 @@ func EmptySuccessResponse(message string) Response {
 	}
 }
 
-// NewPaginatedResponse 创建分页响应
-func NewPaginatedResponse(data interface{}, total int64, page, pageSize int) PaginatedResponse {
+// NewPageResult 创建分页结果
+func NewPageResult(data interface{}, total int64, page, pageSize int) PageResult {
 	// 计算总页数（向上取整）
 	totalPage := int64(math.Ceil(float64(total) / float64(pageSize)))
 
-	return PaginatedResponse{
+	return PageResult{
 		Data:      data,
 		Total:     total,
 		Page:      page,

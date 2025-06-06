@@ -51,6 +51,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	coupleRoutes := protected.Group("/couple")
 	{
 		coupleRoutes.POST("/create", handlers.CreateCoupleHandler(services))
+		coupleRoutes.GET("/sts", handlers.GenerateCoupleSTSToken(services))
 	}
 
 	// Timeline event routes
@@ -76,15 +77,16 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Photos and videos routes
 	mediaRoutes := protected.Group("/media")
 	{
-		mediaRoutes.POST("/create", handlers.UploadPhotoVideoHandler(services))
+		mediaRoutes.POST("/create", handlers.CreatePhotoVideoHandler(services))
+		mediaRoutes.GET("/page", handlers.PageQueryPersonalMediaHandler(services))
 	}
 
 	// 个人媒体路由
 	// 注册个人媒体处
 	personalMediaRoutes := protected.Group("/personal-media")
 	{
-		personalMediaRoutes.POST("/url", handlers.CreatePersonalMediaWithURLHandler(services))
-		personalMediaRoutes.POST("/page", handlers.PageQueryPersonalMediaHandler(services))
+		personalMediaRoutes.POST("/create", handlers.CreatePersonalMediaWithURLHandler(services))
+		personalMediaRoutes.GET("/page", handlers.PageQueryPersonalMediaHandler(services))
 	}
 
 	// Wishlist routes

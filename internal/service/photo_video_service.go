@@ -19,11 +19,7 @@ type PhotoVideoService interface {
 	Service
 	CreatePhotoVideo(ctx context.Context, dto *dto.CreatePhotoVideoRequest) (*models.PhotoVideo, error)
 	GetPhotoVideoByID(ctx context.Context, id int64) (*models.PhotoVideo, error)
-	ListPhotoVideosByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListPhotoVideosByCategory(ctx context.Context, coupleID int64, category string, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListPhotoVideosByMediaType(ctx context.Context, coupleID int64, mediaType string, offset, limit int) ([]*models.PhotoVideo, int64, error)
-	ListPhotoVideosByEventID(ctx context.Context, eventID int64) ([]*models.PhotoVideo, error)
-	ListPhotoVideosByLocationID(ctx context.Context, locationID int64) ([]*models.PhotoVideo, error)
+	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error)
 	UpdatePhotoVideo(ctx context.Context, photoVideo *models.PhotoVideo) error
 	DeletePhotoVideo(ctx context.Context, id int64) error
 }
@@ -32,19 +28,38 @@ type PhotoVideoService interface {
 type photoVideoService struct {
 	*BaseService
 	photoVideoRepo repository.PhotoVideoRepository
+	userRepo       repository.UserRepository
+}
+
+func (s *photoVideoService) Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error) {
+	data, total, err := s.photoVideoRepo.Query(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	result := dto.NewPageResult(data, total, params.Page, params.PageSize)
+	return &result, nil
 }
 
 // NewPhotoVideoService 创建照片和视频服务
-func NewPhotoVideoService(photoVideoRepo repository.PhotoVideoRepository) PhotoVideoService {
+func NewPhotoVideoService(photoVideoRepo repository.PhotoVideoRepository, userRepo repository.UserRepository) PhotoVideoService {
 	return &photoVideoService{
 		BaseService:    NewBaseService(photoVideoRepo),
 		photoVideoRepo: photoVideoRepo,
+		userRepo:       userRepo,
 	}
 }
 
 // CreatePhotoVideo 创建照片/视频
 func (s *photoVideoService) CreatePhotoVideo(ctx context.Context, dto *dto.CreatePhotoVideoRequest) (*models.PhotoVideo, error) {
 	photoVideo := dto.ToModel()
+	user, err := s.userRepo.GetByID(ctx, dto.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("查询用户失败: %w", err)
+	}
+	if user.CoupleID == 0 {
+		return nil, fmt.Errorf("用户没有情侣关系")
+	}
+	photoVideo.CoupleID = user.CoupleID
 	if err := s.photoVideoRepo.Create(ctx, photoVideo); err != nil {
 		return nil, fmt.Errorf("创建照片/视频失败: %w", err)
 	}
@@ -61,31 +76,6 @@ func (s *photoVideoService) GetPhotoVideoByID(ctx context.Context, id int64) (*m
 		return nil, fmt.Errorf("获取照片/视频失败: %w", err)
 	}
 	return photoVideo, nil
-}
-
-// ListPhotoVideosByCoupleID 获取情侣关系下的所有照片/视频
-func (s *photoVideoService) ListPhotoVideosByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.PhotoVideo, int64, error) {
-	return s.photoVideoRepo.ListByCoupleID(ctx, coupleID, offset, limit)
-}
-
-// ListPhotoVideosByCategory 按分类获取照片/视频
-func (s *photoVideoService) ListPhotoVideosByCategory(ctx context.Context, coupleID int64, category string, offset, limit int) ([]*models.PhotoVideo, int64, error) {
-	return s.photoVideoRepo.ListByCategory(ctx, coupleID, category, offset, limit)
-}
-
-// ListPhotoVideosByMediaType 按媒体类型获取照片/视频
-func (s *photoVideoService) ListPhotoVideosByMediaType(ctx context.Context, coupleID int64, mediaType string, offset, limit int) ([]*models.PhotoVideo, int64, error) {
-	return s.photoVideoRepo.ListByMediaType(ctx, coupleID, mediaType, offset, limit)
-}
-
-// ListPhotoVideosByEventID 按事件ID获取照片/视频
-func (s *photoVideoService) ListPhotoVideosByEventID(ctx context.Context, eventID int64) ([]*models.PhotoVideo, error) {
-	return s.photoVideoRepo.ListByEventID(ctx, eventID)
-}
-
-// ListPhotoVideosByLocationID 按地点ID获取照片/视频
-func (s *photoVideoService) ListPhotoVideosByLocationID(ctx context.Context, locationID int64) ([]*models.PhotoVideo, error) {
-	return s.photoVideoRepo.ListByLocationID(ctx, locationID)
 }
 
 // UpdatePhotoVideo 更新照片/视频

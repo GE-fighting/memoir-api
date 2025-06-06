@@ -41,7 +41,7 @@ func CreateCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, dto.NewSuccessResponse(album, "相册创建成功"))
+		c.JSON(http.StatusCreated, dto.NewSuccessResponse(album))
 	}
 }
 
@@ -62,7 +62,7 @@ func GetCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(album, "获取相册成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(album))
 	}
 }
 
@@ -83,7 +83,7 @@ func GetCoupleAlbumWithPhotosHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(album, "获取相册及其照片成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(album))
 	}
 }
 
@@ -123,7 +123,7 @@ func ListCoupleAlbumsHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(albums, "获取相册列表成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(albums))
 	}
 }
 
@@ -150,7 +150,7 @@ func UpdateCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(album, "相册更新成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(album))
 	}
 }
 
@@ -170,6 +170,6 @@ func DeleteCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, dto.NewSuccessResponse(nil, "相册删除成功"))
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(nil))
 	}
 }

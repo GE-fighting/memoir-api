@@ -2,7 +2,7 @@ package dto
 
 // CreatePersonalMediaWithURLRequest 通过URL创建个人媒体请求
 type CreatePersonalMediaWithURLRequest struct {
-	UserID       int64  `json:"userID"`
+	UserID       int64  `json:"user_id"`
 	MediaType    string `json:"media_type" binding:"required,oneof=photo video"`
 	Category     string `json:"category"`
 	Title        string `json:"title"`
@@ -14,7 +14,7 @@ type CreatePersonalMediaWithURLRequest struct {
 // QueryPersonalMediaRequest 查询个人媒体请求
 type QueryPersonalMediaRequest struct {
 	PaginationRequest
-	UserID    int64  `json:"user_id"`    // 用户ID
-	Category  string `json:"category"`   // 分类
-	MediaType string `json:"media_type"` // 媒体类型
+	UserID    int64  `form:"user_id"`    // 用户ID
+	Category  string `form:"category"`   // 分类
+	MediaType string `form:"media_type"` // 媒体类型
 }
