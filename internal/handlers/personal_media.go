@@ -40,7 +40,7 @@ func CreatePersonalMediaWithURLHandler(services service.Factory) gin.HandlerFunc
 
 func PageQueryPersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.GetInt64("userId")
+		userID := c.GetInt64("user_id")
 		var req dto.QueryPersonalMediaRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
 			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的请求参数", err.Error()))

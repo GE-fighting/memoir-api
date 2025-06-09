@@ -106,9 +106,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		albumRoutes.GET("/list", handlers.ListCoupleAlbumsHandler(services))
 		albumRoutes.POST("/create", handlers.CreateCoupleAlbumHandler(services))
 		albumRoutes.GET("/:id", handlers.GetCoupleAlbumHandler(services))
-		albumRoutes.GET("/:id/photos", handlers.GetCoupleAlbumWithPhotosHandler(services))
-		albumRoutes.PUT("/:id", handlers.UpdateCoupleAlbumHandler(services))
-		albumRoutes.DELETE("/:id", handlers.DeleteCoupleAlbumHandler(services))
+		albumRoutes.GET("/photos", handlers.GetCoupleAlbumWithPhotosHandler(services))
 	}
 
 	// OSS (Aliyun Object Storage Service) routes

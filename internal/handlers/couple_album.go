@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
@@ -70,8 +71,9 @@ func GetCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 func GetCoupleAlbumWithPhotosHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 解析相册ID
-		albumID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		albumID, err := strconv.ParseInt(c.Query("id"), 10, 64)
 		if err != nil {
+			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的相册ID", err.Error()))
 			return
 		}
