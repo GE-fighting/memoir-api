@@ -92,12 +92,8 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Wishlist routes
 	wishlistRoutes := protected.Group("/wishlist")
 	{
-		wishlistRoutes.GET("/", handlers.ListWishlistItemsHandler(services))
-		wishlistRoutes.POST("/", handlers.CreateWishlistItemHandler(services))
-		wishlistRoutes.GET("/:id", handlers.GetWishlistItemHandler(services))
-		wishlistRoutes.PUT("/:id", handlers.UpdateWishlistItemHandler(services))
-		wishlistRoutes.PUT("/:id/status", handlers.UpdateWishlistItemStatusHandler(services))
-		wishlistRoutes.DELETE("/:id", handlers.DeleteWishlistItemHandler(services))
+		wishlistRoutes.GET("/list", handlers.ListWishlistItemsHandler(services))
+		wishlistRoutes.POST("/create", handlers.CreateWishlistItemHandler(services))
 	}
 
 	// 情侣相册路由
@@ -105,7 +101,6 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	{
 		albumRoutes.GET("/list", handlers.ListCoupleAlbumsHandler(services))
 		albumRoutes.POST("/create", handlers.CreateCoupleAlbumHandler(services))
-		albumRoutes.GET("/:id", handlers.GetCoupleAlbumHandler(services))
 		albumRoutes.GET("/photos", handlers.GetCoupleAlbumWithPhotosHandler(services))
 	}
 

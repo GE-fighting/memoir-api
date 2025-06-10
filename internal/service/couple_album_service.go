@@ -58,8 +58,8 @@ func (s *coupleAlbumService) Create(ctx context.Context, req *dto.CreateCoupleAl
 	}
 
 	var coverURL *string
-	if req.CoverURL != "" {
-		coverURL = &req.CoverURL
+	if req.CoverURL != nil {
+		coverURL = req.CoverURL
 	}
 
 	album := &models.CoupleAlbum{

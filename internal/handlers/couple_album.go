@@ -93,18 +93,7 @@ func GetCoupleAlbumWithPhotosHandler(services service.Factory) gin.HandlerFunc {
 func ListCoupleAlbumsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从上下文中获取用户ID（JWT中间件设置）
-		userIDValue, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, dto.NewErrorResponse(http.StatusUnauthorized, "用户未登录", "未找到用户ID"))
-			return
-		}
-
-		userID, ok := userIDValue.(int64)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "用户ID类型无效", "用户ID类型断言失败"))
-			return
-		}
-
+		userID := c.GetInt64("user_id")
 		// 获取用户信息
 		user, err := services.User().GetUserByID(c.Request.Context(), userID)
 		if err != nil {

@@ -34,7 +34,7 @@ func CreatePhotoVideoHandler(services service.Factory) gin.HandlerFunc {
 		}
 		userID := c.GetInt64("user_id")
 		request.UserID = userID
-		photoVideo, err := services.PhotoVideo().CreatePhotoVideo(c, &request)
+		photoVideo, err := services.PhotoVideo().CreatePhotoVideo(c.Request.Context(), &request)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "Failed to create photo video", err.Error()))
 			return

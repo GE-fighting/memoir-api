@@ -29,6 +29,7 @@ type photoVideoService struct {
 	*BaseService
 	photoVideoRepo repository.PhotoVideoRepository
 	userRepo       repository.UserRepository
+	ablumRepo      repository.CoupleAlbumRepository
 }
 
 func (s *photoVideoService) Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error) {
@@ -41,11 +42,12 @@ func (s *photoVideoService) Query(ctx context.Context, params *dto.PhotoVideoQue
 }
 
 // NewPhotoVideoService 创建照片和视频服务
-func NewPhotoVideoService(photoVideoRepo repository.PhotoVideoRepository, userRepo repository.UserRepository) PhotoVideoService {
+func NewPhotoVideoService(photoVideoRepo repository.PhotoVideoRepository, userRepo repository.UserRepository, ablumRepo repository.CoupleAlbumRepository) PhotoVideoService {
 	return &photoVideoService{
 		BaseService:    NewBaseService(photoVideoRepo),
 		photoVideoRepo: photoVideoRepo,
 		userRepo:       userRepo,
+		ablumRepo:      ablumRepo,
 	}
 }
 
@@ -62,6 +64,16 @@ func (s *photoVideoService) CreatePhotoVideo(ctx context.Context, dto *dto.Creat
 	photoVideo.CoupleID = user.CoupleID
 	if err := s.photoVideoRepo.Create(ctx, photoVideo); err != nil {
 		return nil, fmt.Errorf("创建照片/视频失败: %w", err)
+	}
+	//对应相册 照片数量+1
+	ablum, err := s.ablumRepo.GetByID(ctx, photoVideo.AlbumID)
+	if err != nil {
+		return nil, fmt.Errorf("查询相册失败：%w", err)
+	}
+	ablum.Count = ablum.Count + 1
+	err = s.ablumRepo.Update(ctx, ablum)
+	if err != nil {
+		return nil, fmt.Errorf("更新相册中媒体数量失败：%w", err)
 	}
 	return photoVideo, nil
 }
