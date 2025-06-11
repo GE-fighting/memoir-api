@@ -11,6 +11,7 @@ type CreateWishlistRequest struct {
 	Title        string  `json:"title" binding:"required,max=100"`
 	Description  string  `json:"description,omitempty"`
 	Priority     int     `json:"priority" binding:"omitempty,min=1,max=3"` // 1-高，2-中，3-低
+	Type         int     `json:"type" binding:"omitempty,min=1,max=2"`     // 1-日常，2-旅行
 	ReminderDate *string `json:"reminder_date,omitempty"`                  // 格式: "2006-01-02"
 }
 
@@ -19,7 +20,8 @@ type UpdateWishlistRequest struct {
 	Title        string  `json:"title" binding:"omitempty,max=100"`
 	Description  string  `json:"description,omitempty"`
 	Priority     int     `json:"priority" binding:"omitempty,min=1,max=3"`
-	ReminderDate *string `json:"reminder_date,omitempty"` // 格式: "2006-01-02"
+	Type         int     `json:"type" binding:"omitempty,min=1,max=2"`     // 1-日常，2-旅行
+	ReminderDate *string `json:"reminder_date,omitempty"`                  // 格式: "2006-01-02"
 }
 
 // UpdateWishlistStatusRequest 更新心愿清单状态请求
@@ -29,13 +31,14 @@ type UpdateWishlistStatusRequest struct {
 
 // WishlistDTO 心愿清单响应DTO
 type WishlistDTO struct {
-	ID           int64   `json:"id,string"`
-	CoupleID     int64   `json:"couple_id,string"`
-	Title        string  `json:"title"`
-	Description  string  `json:"description,omitempty"`
-	Priority     int     `json:"priority"`
-	Status       string  `json:"status"`
-	ReminderDate *string `json:"reminder_date,omitempty"` // 格式: "2006-01-02"
+	ID           int64     `json:"id,string"`
+	CoupleID     int64     `json:"couple_id,string"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description,omitempty"`
+	Priority     int       `json:"priority"`
+	Status       string    `json:"status"`
+	Type         int       `json:"type"`                            // 1-日常，2-旅行
+	ReminderDate *string   `json:"reminder_date,omitempty"`         // 格式: "2006-01-02"
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -46,6 +49,7 @@ type WishlistQueryParams struct {
 	CoupleID int64  `form:"couple_id,string" binding:"required"`
 	Status   string `form:"status" binding:"omitempty,oneof=pending completed"`
 	Priority int    `form:"priority" binding:"omitempty,min=1,max=3"`
+	Type     int    `form:"type" binding:"omitempty,min=1,max=2"` // 1-日常，2-旅行
 }
 
 // ToModel 将创建请求转换为模型对象
@@ -55,12 +59,18 @@ func (r *CreateWishlistRequest) ToModel() (*models.Wishlist, error) {
 		Title:       r.Title,
 		Description: r.Description,
 		Priority:    r.Priority,
+		Type:        r.Type,
 		Status:      "pending", // 默认状态为pending
 	}
 
 	// 如果Priority为0，设置默认值为2（中等优先级）
 	if wishlist.Priority == 0 {
 		wishlist.Priority = 2
+	}
+
+	// 如果Type为0，设置默认值为1（日常）
+	if wishlist.Type == 0 {
+		wishlist.Type = 1
 	}
 
 	// 处理提醒日期
@@ -89,6 +99,10 @@ func (r *UpdateWishlistRequest) ApplyToModel(wishlist *models.Wishlist) error {
 		wishlist.Priority = r.Priority
 	}
 
+	if r.Type != 0 {
+		wishlist.Type = r.Type
+	}
+
 	// 处理提醒日期
 	if r.ReminderDate != nil {
 		if *r.ReminderDate == "" {
@@ -115,6 +129,7 @@ func WishlistFromModel(wishlist *models.Wishlist) WishlistDTO {
 		Description: wishlist.Description,
 		Priority:    wishlist.Priority,
 		Status:      wishlist.Status,
+		Type:        wishlist.Type,
 		CreatedAt:   wishlist.CreatedAt,
 		UpdatedAt:   wishlist.UpdatedAt,
 	}

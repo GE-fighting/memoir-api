@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"memoir-api/internal/api/dto"
 
 	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
@@ -16,7 +17,7 @@ var (
 // WishlistService 心愿清单服务接口
 type WishlistService interface {
 	Service
-	CreateWishlist(ctx context.Context, wishlist *models.Wishlist) (*models.Wishlist, error)
+	CreateWishlist(ctx context.Context, wishlistDTO *dto.CreateWishlistRequest) (*models.Wishlist, error)
 	GetWishlistByID(ctx context.Context, id int64) (*models.Wishlist, error)
 	ListWishlistsByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Wishlist, int64, error)
 	ListWishlistsByStatus(ctx context.Context, coupleID int64, status string) ([]*models.Wishlist, error)
@@ -42,7 +43,11 @@ func NewWishlistService(wishlistRepo repository.WishlistRepository) WishlistServ
 }
 
 // CreateWishlist 创建心愿
-func (s *wishlistService) CreateWishlist(ctx context.Context, wishlist *models.Wishlist) (*models.Wishlist, error) {
+func (s *wishlistService) CreateWishlist(ctx context.Context, wishlistDTO *dto.CreateWishlistRequest) (*models.Wishlist, error) {
+	wishlist, err := wishlistDTO.ToModel()
+	if err != nil {
+		return nil, err
+	}
 	if err := s.wishlistRepo.Create(ctx, wishlist); err != nil {
 		return nil, fmt.Errorf("创建心愿失败: %w", err)
 	}

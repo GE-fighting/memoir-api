@@ -12,6 +12,7 @@ type Wishlist struct {
 	Description  string     `json:"description,omitempty" gorm:"type:text"`
 	Priority     int        `json:"priority" gorm:"not null;default:2"`                        // 1-高，2-中，3-低
 	Status       string     `json:"status" gorm:"type:varchar(20);not null;default:'pending'"` // 'pending' or 'completed'
+	Type         int        `json:"type" gorm:"not null;default:1"`                            // 1-日常，2-旅行
 	ReminderDate *time.Time `json:"reminder_date,omitempty" gorm:"type:date"`
 
 	// 关联 - 没有外键约束

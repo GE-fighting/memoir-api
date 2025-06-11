@@ -19,8 +19,17 @@ func ListWishlistItemsHandler(services service.Factory) gin.HandlerFunc {
 // CreateWishlistItemHandler creates a new wishlist item
 func CreateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement create wishlist item logic
-		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建心愿单项目成功"))
+		var req dto.CreateWishlistRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		wishlist, err := services.Wishlist().CreateWishlist(c.Request.Context(), &req)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "创建心愿单项目失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusCreated, dto.NewSuccessResponse(wishlist))
 	}
 }
 
