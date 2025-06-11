@@ -19,7 +19,7 @@ type WishlistRepository interface {
 	Repository
 	Create(ctx context.Context, wishlist *models.Wishlist) error
 	GetByID(ctx context.Context, id int64) (*models.Wishlist, error)
-	ListByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Wishlist, int64, error)
+	ListByCoupleID(ctx context.Context, coupleID int64) ([]*models.Wishlist, error)
 	ListByStatus(ctx context.Context, coupleID int64, status string) ([]*models.Wishlist, error)
 	ListByPriority(ctx context.Context, coupleID int64, priority int) ([]*models.Wishlist, error)
 	ListUpcomingReminders(ctx context.Context, daysAhead int) ([]*models.Wishlist, error)
@@ -59,26 +59,23 @@ func (r *wishlistRepository) GetByID(ctx context.Context, id int64) (*models.Wis
 }
 
 // ListByCoupleID 获取情侣关系下的所有心愿，按优先级和创建时间排序
-func (r *wishlistRepository) ListByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Wishlist, int64, error) {
+func (r *wishlistRepository) ListByCoupleID(ctx context.Context, coupleID int64) ([]*models.Wishlist, error) {
 	var wishlists []*models.Wishlist
 	var total int64
 
 	// 获取总数
 	if err := r.DB().WithContext(ctx).Model(&models.Wishlist{}).Where("couple_id = ?", coupleID).Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// 获取列表，优先级从高到低（数字从小到大），同优先级的按创建时间从新到旧
 	query := r.DB().WithContext(ctx).Where("couple_id = ?", coupleID).Order("priority ASC, created_at DESC")
-	if offset >= 0 && limit > 0 {
-		query = query.Offset(offset).Limit(limit)
-	}
 
 	if err := query.Find(&wishlists).Error; err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return wishlists, total, nil
+	return wishlists, nil
 }
 
 // ListByStatus 按状态获取心愿

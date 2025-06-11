@@ -4,6 +4,7 @@ import (
 	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,8 +12,16 @@ import (
 // ListWishlistItemsHandler lists wishlist items
 func ListWishlistItemsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement list wishlist items logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取心愿单列表成功"))
+		coupleId, err := strconv.ParseInt(c.Query("couple_id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的情侣ID", err.Error()))
+			return
+		}
+		wishListDTO, err := services.Wishlist().ListWishlistsByCoupleID(c.Request.Context(), coupleId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "查询心愿单失败", err.Error()))
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(wishListDTO))
 	}
 }
 
@@ -30,37 +39,5 @@ func CreateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusCreated, dto.NewSuccessResponse(wishlist))
-	}
-}
-
-// GetWishlistItemHandler gets a specific wishlist item
-func GetWishlistItemHandler(services service.Factory) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// TODO: Implement get wishlist item logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取心愿单项目成功"))
-	}
-}
-
-// UpdateWishlistItemHandler updates a wishlist item
-func UpdateWishlistItemHandler(services service.Factory) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// TODO: Implement update wishlist item logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新心愿单项目成功"))
-	}
-}
-
-// UpdateWishlistItemStatusHandler updates a wishlist item status
-func UpdateWishlistItemStatusHandler(services service.Factory) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// TODO: Implement update wishlist item status logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新心愿单项目状态成功"))
-	}
-}
-
-// DeleteWishlistItemHandler deletes a wishlist item
-func DeleteWishlistItemHandler(services service.Factory) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// TODO: Implement delete wishlist item logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除心愿单项目成功"))
 	}
 }

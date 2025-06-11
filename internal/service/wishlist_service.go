@@ -19,7 +19,7 @@ type WishlistService interface {
 	Service
 	CreateWishlist(ctx context.Context, wishlistDTO *dto.CreateWishlistRequest) (*models.Wishlist, error)
 	GetWishlistByID(ctx context.Context, id int64) (*models.Wishlist, error)
-	ListWishlistsByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Wishlist, int64, error)
+	ListWishlistsByCoupleID(ctx context.Context, coupleID int64) ([]dto.WishlistDTO, error)
 	ListWishlistsByStatus(ctx context.Context, coupleID int64, status string) ([]*models.Wishlist, error)
 	ListWishlistsByPriority(ctx context.Context, coupleID int64, priority int) ([]*models.Wishlist, error)
 	ListUpcomingReminders(ctx context.Context, daysAhead int) ([]*models.Wishlist, error)
@@ -67,8 +67,12 @@ func (s *wishlistService) GetWishlistByID(ctx context.Context, id int64) (*model
 }
 
 // ListWishlistsByCoupleID 获取情侣关系下的所有心愿
-func (s *wishlistService) ListWishlistsByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Wishlist, int64, error) {
-	return s.wishlistRepo.ListByCoupleID(ctx, coupleID, offset, limit)
+func (s *wishlistService) ListWishlistsByCoupleID(ctx context.Context, coupleID int64) ([]dto.WishlistDTO, error) {
+	entities, err := s.wishlistRepo.ListByCoupleID(ctx, coupleID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.WishlistsFromModels(entities), nil
 }
 
 // ListWishlistsByStatus 按状态获取心愿
