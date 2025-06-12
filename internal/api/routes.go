@@ -94,6 +94,9 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	{
 		wishlistRoutes.GET("/list", handlers.ListWishlistItemsHandler(services))
 		wishlistRoutes.POST("/create", handlers.CreateWishlistItemHandler(services))
+		wishlistRoutes.PUT("/update", handlers.UpdateWishlistItemHandler(services))
+		wishlistRoutes.PUT("/:id/status", handlers.UpdateWishlistItemStatusHandler(services))
+		wishlistRoutes.DELETE("/:id", handlers.DeleteWishlistItemHandler(services))
 	}
 
 	// 情侣相册路由

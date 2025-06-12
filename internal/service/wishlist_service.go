@@ -26,6 +26,7 @@ type WishlistService interface {
 	UpdateWishlist(ctx context.Context, wishlist *models.Wishlist) error
 	UpdateWishlistStatus(ctx context.Context, id int64, status string) error
 	DeleteWishlist(ctx context.Context, id int64) error
+	UpdateWishlistByRequest(ctx context.Context, req *dto.UpdateWishlistRequest) (*models.Wishlist, error)
 }
 
 // wishlistService 心愿清单服务实现
@@ -106,6 +107,27 @@ func (s *wishlistService) UpdateWishlist(ctx context.Context, wishlist *models.W
 		return fmt.Errorf("更新心愿失败: %w", err)
 	}
 	return nil
+}
+
+// UpdateWishlistByRequest 根据请求更新心愿
+func (s *wishlistService) UpdateWishlistByRequest(ctx context.Context, req *dto.UpdateWishlistRequest) (*models.Wishlist, error) {
+	// 获取现有的心愿项
+	existingWishlist, err := s.GetWishlistByID(ctx, req.ID)
+	if err != nil {
+		return nil, err // GetWishlistByID 已经处理了错误包装
+	}
+
+	// 将请求中的更新应用到现有心愿项
+	if err := req.ApplyToModel(existingWishlist); err != nil {
+		return nil, fmt.Errorf("更新心愿参数无效: %w", err)
+	}
+
+	// 调用更新方法
+	if err := s.UpdateWishlist(ctx, existingWishlist); err != nil {
+		return nil, err // UpdateWishlist 已经处理了错误包装
+	}
+
+	return existingWishlist, nil
 }
 
 // UpdateWishlistStatus 更新心愿状态

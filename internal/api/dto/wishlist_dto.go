@@ -17,11 +17,12 @@ type CreateWishlistRequest struct {
 
 // UpdateWishlistRequest 更新心愿清单请求
 type UpdateWishlistRequest struct {
+	ID           int64   `json:"id,string" binding:"required"`
 	Title        string  `json:"title" binding:"omitempty,max=100"`
 	Description  string  `json:"description,omitempty"`
 	Priority     int     `json:"priority" binding:"omitempty,min=1,max=3"`
-	Type         int     `json:"type" binding:"omitempty,min=1,max=2"`     // 1-日常，2-旅行
-	ReminderDate *string `json:"reminder_date,omitempty"`                  // 格式: "2006-01-02"
+	Type         int     `json:"type" binding:"omitempty,min=1,max=2"` // 1-日常，2-旅行
+	ReminderDate *string `json:"reminder_date,omitempty"`              // 格式: "2006-01-02"
 }
 
 // UpdateWishlistStatusRequest 更新心愿清单状态请求
@@ -37,8 +38,8 @@ type WishlistDTO struct {
 	Description  string    `json:"description,omitempty"`
 	Priority     int       `json:"priority"`
 	Status       string    `json:"status"`
-	Type         int       `json:"type"`                            // 1-日常，2-旅行
-	ReminderDate *string   `json:"reminder_date,omitempty"`         // 格式: "2006-01-02"
+	Type         int       `json:"type"`                    // 1-日常，2-旅行
+	ReminderDate *string   `json:"reminder_date,omitempty"` // 格式: "2006-01-02"
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
