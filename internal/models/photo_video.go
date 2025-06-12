@@ -10,11 +10,12 @@ type PhotoVideo struct {
 	ThumbnailURL string `json:"thumbnail_url,omitempty" gorm:"type:text"`
 	Description  string `json:"description,omitempty" gorm:"type:text"`
 	Title        string `json:"title,omitempty" gorm:"type:varchar(100)"`
-	EventID      *int64 `json:"event_id,string,omitempty"`
-	LocationID   *int64 `json:"location_id,string,omitempty"`
 
 	// 关联 - 没有外键约束
-	Couple   Couple         `json:"-" gorm:"-"`
-	Event    *TimelineEvent `json:"event,omitempty" gorm:"-"`
-	Location *Location      `json:"location,omitempty" gorm:"-"`
+	Couple         Couple          `json:"-" gorm:"-"`
+	TimelineEvents []TimelineEvent `json:"timeline_events,omitempty" gorm:"-"`
+	Location       *Location       `json:"location,omitempty" gorm:"-"`
+
+	// 关联表
+	TimelineEventPhotosVideos []TimelineEventPhotoVideo `json:"-" gorm:"-"`
 }

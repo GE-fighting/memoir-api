@@ -19,7 +19,15 @@ func ListTimelineEventsHandler(services service.Factory) gin.HandlerFunc {
 // CreateTimelineEventHandler creates a new timeline event
 func CreateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement create timeline event logic
+		var req dto.CreateTimelineEventRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		result, err := services.TimelineEvent().CreateTimelineEvent(c.Request.Context(), &req)
+		if err != nil || result == false {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "创建时间线事件失败", err.Error()))
+		}
 		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建时间线事件成功"))
 	}
 }

@@ -21,13 +21,26 @@ type LocationRepository interface {
 	ListByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Location, int64, error)
 	Update(ctx context.Context, location *models.Location) error
 	Delete(ctx context.Context, id int64) error
-	// 根据地理位置查询附近地点
-	FindNearby(ctx context.Context, lat, lng float64, radiusMeters float64, limit int) ([]*models.Location, error)
 }
 
 // locationRepository 地点仓库实现
 type locationRepository struct {
 	*BaseRepository
+}
+
+func (r *locationRepository) FindByID(ctx context.Context, id int64) (*models.Location, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *locationRepository) FindByIDs(ctx context.Context, ids []int64) ([]models.Location, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *locationRepository) FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]models.Location, int64, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // NewLocationRepository 创建地点仓库

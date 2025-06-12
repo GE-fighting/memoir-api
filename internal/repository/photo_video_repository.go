@@ -22,6 +22,10 @@ type PhotoVideoRepository interface {
 	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) ([]*models.PhotoVideo, int64, error)
 	Update(ctx context.Context, photoVideo *models.PhotoVideo) error
 	Delete(ctx context.Context, id int64) error
+	//FindByID(ctx context.Context, id int64) (*models.PhotoVideo, error)
+	//FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error)
+	//FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]models.PhotoVideo, int64, error)
+	//FindByAlbumID(ctx context.Context, albumID int64, offset, limit int) ([]models.PhotoVideo, int64, error)
 }
 
 // photoVideoRepository 照片和视频仓库实现

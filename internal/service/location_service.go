@@ -21,7 +21,6 @@ type LocationService interface {
 	ListLocationsByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Location, int64, error)
 	UpdateLocation(ctx context.Context, location *models.Location) error
 	DeleteLocation(ctx context.Context, id int64) error
-	FindNearbyLocations(ctx context.Context, lat, lng float64, radiusMeters float64, limit int) ([]*models.Location, error)
 }
 
 // locationService 地点服务实现
@@ -97,13 +96,4 @@ func (s *locationService) DeleteLocation(ctx context.Context, id int64) error {
 		return fmt.Errorf("删除地点失败: %w", err)
 	}
 	return nil
-}
-
-// FindNearbyLocations 查找附近地点
-func (s *locationService) FindNearbyLocations(ctx context.Context, lat, lng float64, radiusMeters float64, limit int) ([]*models.Location, error) {
-	locations, err := s.locationRepo.FindNearby(ctx, lat, lng, radiusMeters, limit)
-	if err != nil {
-		return nil, fmt.Errorf("查找附近地点失败: %w", err)
-	}
-	return locations, nil
 }

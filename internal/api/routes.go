@@ -57,11 +57,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Timeline event routes
 	eventRoutes := protected.Group("/events")
 	{
-		eventRoutes.GET("/", handlers.ListTimelineEventsHandler(services))
-		eventRoutes.POST("/", handlers.CreateTimelineEventHandler(services))
-		eventRoutes.GET("/:id", handlers.GetTimelineEventHandler(services))
-		eventRoutes.PUT("/:id", handlers.UpdateTimelineEventHandler(services))
-		eventRoutes.DELETE("/:id", handlers.DeleteTimelineEventHandler(services))
+		eventRoutes.POST("/create", handlers.CreateTimelineEventHandler(services))
 	}
 
 	// Location routes

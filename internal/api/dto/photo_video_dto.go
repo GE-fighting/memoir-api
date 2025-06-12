@@ -33,7 +33,5 @@ func (r *CreatePhotoVideoRequest) ToModel() *models.PhotoVideo {
 		Description:  r.Description,
 		CoupleID:     r.CoupleID,
 		AlbumID:      r.AlbumID,
-		EventID:      r.EventID,
-		LocationID:   r.LocationID,
 	}
 }

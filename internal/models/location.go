@@ -63,4 +63,7 @@ type Location struct {
 	Couple         Couple          `json:"-" gorm:"-"`
 	TimelineEvents []TimelineEvent `json:"timeline_events,omitempty" gorm:"-"`
 	PhotosVideos   []PhotoVideo    `json:"photos_videos,omitempty" gorm:"-"`
+
+	// 关联表
+	TimelineEventLocations []TimelineEventLocation `json:"-" gorm:"-"`
 }
