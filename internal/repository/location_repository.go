@@ -21,6 +21,9 @@ type LocationRepository interface {
 	ListByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.Location, int64, error)
 	Update(ctx context.Context, location *models.Location) error
 	Delete(ctx context.Context, id int64) error
+	FindByID(ctx context.Context, id int64) (*models.Location, error)
+	FindByIDs(ctx context.Context, ids []int64) ([]models.Location, error)
+	FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]models.Location, int64, error)
 }
 
 // locationRepository 地点仓库实现
@@ -34,8 +37,12 @@ func (r *locationRepository) FindByID(ctx context.Context, id int64) (*models.Lo
 }
 
 func (r *locationRepository) FindByIDs(ctx context.Context, ids []int64) ([]models.Location, error) {
-	//TODO implement me
-	panic("implement me")
+	var locations []models.Location
+	err := r.DB().WithContext(ctx).Where("id IN ?", ids).Find(&locations).Error
+	if err != nil {
+		return nil, err
+	}
+	return locations, nil
 }
 
 func (r *locationRepository) FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]models.Location, int64, error) {
@@ -115,31 +122,4 @@ func (r *locationRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// FindNearby 查找附近地点
-func (r *locationRepository) FindNearby(ctx context.Context, lat, lng float64, radiusMeters float64, limit int) ([]*models.Location, error) {
-	var locations []*models.Location
 
-	// 使用PostGIS的ST_DWithin函数查询指定半径内的地点
-	// radiusMeters需要除以111111将米转换为度（1度约等于111.111公里）
-	radius := radiusMeters / 111111.0
-
-	query := r.DB().WithContext(ctx).Raw(`
-		SELECT * FROM locations
-		WHERE ST_DWithin(
-			coordinates,
-			ST_SetSRID(ST_MakePoint(?, ?), 4326),
-			?
-		)
-		ORDER BY ST_Distance(
-			coordinates,
-			ST_SetSRID(ST_MakePoint(?, ?), 4326)
-		)
-		LIMIT ?
-	`, lng, lat, radius, lng, lat, limit)
-
-	if err := query.Scan(&locations).Error; err != nil {
-		return nil, err
-	}
-
-	return locations, nil
-}

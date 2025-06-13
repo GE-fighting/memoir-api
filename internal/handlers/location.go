@@ -4,6 +4,7 @@ import (
 	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,16 +12,35 @@ import (
 // ListLocationsHandler lists locations
 func ListLocationsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement list locations logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取位置列表成功"))
+		value, err := strconv.ParseInt(c.Query("couple_id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的情侣ID", err.Error()))
+			return
+		}
+		var req dto.LocationQueryParams
+		locations, _, err := services.Location().ListLocationsByCoupleID(c.Request.Context(), value, 0, 0)
+		if err := c.ShouldBindQuery(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "查询所有的地点出错", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(locations))
 	}
 }
 
 // CreateLocationHandler creates a new location
 func CreateLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement create location logic
-		c.JSON(http.StatusCreated, dto.EmptySuccessResponse("创建位置成功"))
+		var req dto.CreateLocationRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		location, err := services.Location().CreateLocation(c.Request.Context(), req.ToModel())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "创建位置失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusCreated, dto.NewSuccessResponse(location))
 	}
 }
 

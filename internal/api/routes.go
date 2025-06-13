@@ -63,11 +63,8 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Location routes
 	locationRoutes := protected.Group("/locations")
 	{
-		locationRoutes.GET("/", handlers.ListLocationsHandler(services))
-		locationRoutes.POST("/", handlers.CreateLocationHandler(services))
-		locationRoutes.GET("/:id", handlers.GetLocationHandler(services))
-		locationRoutes.PUT("/:id", handlers.UpdateLocationHandler(services))
-		locationRoutes.DELETE("/:id", handlers.DeleteLocationHandler(services))
+		locationRoutes.GET("/list", handlers.ListLocationsHandler(services))
+		locationRoutes.POST("/create", handlers.CreateLocationHandler(services))
 	}
 
 	// Photos and videos routes

@@ -39,7 +39,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 		repoFactory.User(),
 	)
 	locationService := NewLocationService(repoFactory.Location())
-	timelineEventService := NewTimelineEventService(repoFactory.TimelineEvent())
+	timelineEventService := NewTimelineEventService(repoFactory.TimelineEvent(), repoFactory.Location(), repoFactory.PhotoVideo(), repoFactory.TimelineEventLocation(), repoFactory.TimelineEventPhotoVideo())
 	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo(), repoFactory.User(), repoFactory.CoupleAlbum())
 	wishlistService := NewWishlistService(repoFactory.Wishlist())
 	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())

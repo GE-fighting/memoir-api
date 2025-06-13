@@ -5,13 +5,17 @@ import (
 	"log"
 	"time"
 
+	"memoir-api/internal/config"
+	memoryLogger "memoir-api/internal/logger"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 // NewDB creates and returns a GORM database connection
-func NewDB(connectionString string) (*gorm.DB, error) {
+func NewDB(dbConfig *config.DBConfig) (*gorm.DB, error) {
+	connectionString := dbConfig.ConnectionString()
 	// Configure GORM logger
 	gormLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
@@ -42,9 +46,22 @@ func NewDB(connectionString string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get sql.DB: %w", err)
 	}
 
-	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	// 使用配置文件中的连接池参数
+	sqlDB.SetMaxOpenConns(dbConfig.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(dbConfig.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(dbConfig.ConnMaxLifetime) * time.Minute)
 
 	return db, nil
+}
+
+func CloseDB(db *gorm.DB) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		memoryLogger.Error(err, "failed to get sql.DB for close db")
+		return
+	}
+	err = sqlDB.Close()
+	if err != nil {
+		memoryLogger.Error(err, "failed to close database connection")
+	}
 }

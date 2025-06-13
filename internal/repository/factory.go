@@ -14,20 +14,32 @@ type Factory interface {
 	Wishlist() WishlistRepository
 	PersonalMedia() PersonalMediaRepository
 	CoupleAlbum() CoupleAlbumRepository
+	TimelineEventLocation() TimelineEventLocationRepository
+	TimelineEventPhotoVideo() TimelineEventPhotoVideoRepository
 	GetDB() *gorm.DB
 }
 
 // factory 仓库工厂实现
 type factory struct {
-	db                      *gorm.DB
-	coupleRepository        CoupleRepository
-	userRepository          UserRepository
-	locationRepository      LocationRepository
-	timelineEventRepository TimelineEventRepository
-	photoVideoRepository    PhotoVideoRepository
-	wishlistRepository      WishlistRepository
-	personalMediaRepository PersonalMediaRepository
-	coupleAlbumRepository   CoupleAlbumRepository
+	db                                *gorm.DB
+	coupleRepository                  CoupleRepository
+	userRepository                    UserRepository
+	locationRepository                LocationRepository
+	timelineEventRepository           TimelineEventRepository
+	photoVideoRepository              PhotoVideoRepository
+	wishlistRepository                WishlistRepository
+	personalMediaRepository           PersonalMediaRepository
+	coupleAlbumRepository             CoupleAlbumRepository
+	timelineEventLocationRepository   TimelineEventLocationRepository
+	timelineEventPhotoVideoRepository TimelineEventPhotoVideoRepository
+}
+
+func (f *factory) TimelineEventLocation() TimelineEventLocationRepository {
+	return f.timelineEventLocationRepository
+}
+
+func (f *factory) TimelineEventPhotoVideo() TimelineEventPhotoVideoRepository {
+	return f.timelineEventPhotoVideoRepository
 }
 
 // NewFactory 创建仓库工厂

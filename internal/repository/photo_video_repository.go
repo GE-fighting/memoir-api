@@ -23,7 +23,7 @@ type PhotoVideoRepository interface {
 	Update(ctx context.Context, photoVideo *models.PhotoVideo) error
 	Delete(ctx context.Context, id int64) error
 	//FindByID(ctx context.Context, id int64) (*models.PhotoVideo, error)
-	//FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error)
+	FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error)
 	//FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]models.PhotoVideo, int64, error)
 	//FindByAlbumID(ctx context.Context, albumID int64, offset, limit int) ([]models.PhotoVideo, int64, error)
 }
@@ -31,6 +31,15 @@ type PhotoVideoRepository interface {
 // photoVideoRepository 照片和视频仓库实现
 type photoVideoRepository struct {
 	*BaseRepository
+}
+
+func (r *photoVideoRepository) FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error) {
+	var photoVideos []models.PhotoVideo
+	err := r.DB().WithContext(ctx).Where("id IN ?", ids).Find(&photoVideos).Error
+	if err != nil {
+		return nil, err
+	}
+	return photoVideos, nil
 }
 
 func (r *photoVideoRepository) Query(ctx context.Context, params *dto.PhotoVideoQueryParams) ([]*models.PhotoVideo, int64, error) {

@@ -20,12 +20,15 @@ type Config struct {
 
 // DBConfig 存储数据库配置
 type DBConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Name     string
-	SSLMode  string
+	Host            string
+	Port            string
+	User            string
+	Password        string
+	Name            string
+	SSLMode         string
+	MaxOpenConns    int    // 最大打开连接数
+	MaxIdleConns    int    // 最大空闲连接数
+	ConnMaxLifetime int    // 连接最大生存时间(分钟)
 }
 
 // RedisConfig 存储Redis配置
@@ -126,12 +129,15 @@ func New() *Config {
 
 	return &Config{
 		DB: DBConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			Name:     getEnv("DB_NAME", "memoir"),
-			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+			Host:            getEnv("DB_HOST", "localhost"),
+			Port:            getEnv("DB_PORT", "5432"),
+			User:            getEnv("DB_USER", "postgres"),
+			Password:        getEnv("DB_PASSWORD", "postgres"),
+			Name:            getEnv("DB_NAME", "memoir"),
+			SSLMode:         getEnv("DB_SSLMODE", "disable"),
+			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", "25"),
+			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", "5"),
+			ConnMaxLifetime: getEnvInt("DB_CONN_MAX_LIFETIME", "60"), // 默认60分钟
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),

@@ -8,7 +8,6 @@ import (
 	"memoir-api/internal/config"
 	"memoir-api/internal/db"
 	"memoir-api/internal/logger"
-	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
 	"memoir-api/internal/service"
 	"net/http"
@@ -18,8 +17,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -36,25 +33,15 @@ func main() {
 	}
 
 	// Connect to database
-	dbConn, err := db.NewDB(cfg.DB.ConnectionString())
+	dbConn, err := db.NewDB(&cfg.DB)
 	if err != nil {
 		logger.Fatal(err, "Failed to connect to database")
 	}
 
-	// Configure connection pool
+	// Get SQL DB instance for graceful shutdown
 	sqlDB, err := dbConn.DB()
 	if err != nil {
 		logger.Fatal(err, "Failed to get database connection")
-	}
-
-	// Set connection pool parameters
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
-
-	// Auto-migrate database schemas
-	if err := autoMigrateDB(dbConn); err != nil {
-		logger.Fatal(err, "Failed to migrate database")
 	}
 
 	// Initialize Redis
@@ -118,30 +105,7 @@ func main() {
 	if err := sqlDB.Close(); err != nil {
 		logger.Fatal(err, "Error closing database connection")
 	}
-
 	logger.Info("Server exiting")
 }
 
-// autoMigrateDB handles database migrations
-func autoMigrateDB(db interface{}) error {
-	gormDB := db.(*gorm.DB)
 
-	log.Info().Msg("Running database migrations...")
-
-	// 使用AutoMigrate进行增量迁移（添加表/列，但不删除）
-	if err := gormDB.AutoMigrate(
-		&models.User{},
-		&models.Couple{},
-		&models.Location{},
-		&models.TimelineEvent{},
-		&models.PhotoVideo{},
-		&models.Wishlist{},
-		&models.PersonalMedia{},
-		&models.CoupleAlbum{},
-	); err != nil {
-		return fmt.Errorf("failed to migrate tables: %w", err)
-	}
-
-	log.Info().Msg("Database migrations completed successfully")
-	return nil
-}
