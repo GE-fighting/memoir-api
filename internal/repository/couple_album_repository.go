@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"memoir-api/internal/models"
 )
 
@@ -19,8 +20,9 @@ type coupleAlbumRepository struct {
 	*BaseRepository
 }
 
-func NewCoupleAlbumRepository(db *BaseRepository) CoupleAlbumRepository {
-	return &coupleAlbumRepository{db}
+func NewCoupleAlbumRepository(db *gorm.DB) CoupleAlbumRepository {
+	return &coupleAlbumRepository{
+		BaseRepository: NewBaseRepository(db)}
 }
 
 func (r *coupleAlbumRepository) Create(ctx context.Context, album *models.CoupleAlbum) error {

@@ -8,7 +8,8 @@ import (
 type TimelineEvent struct {
 	Base
 	CoupleID  int64     `json:"couple_id,string" gorm:"not null"`
-	EventDate time.Time `json:"event_date" gorm:"type:date;not null"`
+	StartDate time.Time `json:"start_date" gorm:"type:date;not null"`
+	EndDate   time.Time `json:"end_date" gorm:"type:date;not null"`
 	Title     string    `json:"title" gorm:"type:varchar(100);not null"`
 	Content   string    `json:"content,omitempty" gorm:"type:text;not null"`
 	CoverURL  string    `json:"cover_url,omitempty" gorm:"type:text"`

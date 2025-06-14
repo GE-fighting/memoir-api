@@ -33,6 +33,13 @@ type photoVideoRepository struct {
 	*BaseRepository
 }
 
+// NewPhotoVideoRepository 创建照片和视频仓库
+func NewPhotoVideoRepository(db *gorm.DB) PhotoVideoRepository {
+	return &photoVideoRepository{
+		BaseRepository: NewBaseRepository(db),
+	}
+}
+
 func (r *photoVideoRepository) FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error) {
 	var photoVideos []models.PhotoVideo
 	err := r.DB().WithContext(ctx).Where("id IN ?", ids).Find(&photoVideos).Error
@@ -74,13 +81,6 @@ func (r *photoVideoRepository) Query(ctx context.Context, params *dto.PhotoVideo
 		return nil, 0, err
 	}
 	return results, total, nil
-}
-
-// NewPhotoVideoRepository 创建照片和视频仓库
-func NewPhotoVideoRepository(db *gorm.DB) PhotoVideoRepository {
-	return &photoVideoRepository{
-		BaseRepository: NewBaseRepository(db),
-	}
 }
 
 // Create 创建照片/视频

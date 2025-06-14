@@ -92,6 +92,8 @@ func migrateUp(db *gorm.DB) error {
 		&models.Wishlist{},
 		&models.PersonalMedia{},
 		&models.CoupleAlbum{},
+		&models.TimelineEventPhotoVideo{},
+		&models.TimelineEventLocation{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate tables: %w", err)
 	}

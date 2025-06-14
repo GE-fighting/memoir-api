@@ -4,15 +4,26 @@ import (
 	"memoir-api/internal/api/dto"
 	"memoir-api/internal/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 // ListTimelineEventsHandler lists timeline events
-func ListTimelineEventsHandler(services service.Factory) gin.HandlerFunc {
+func PageTimelineEventsHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement list timeline events logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取时间线事件列表成功"))
+		var req dto.TimelineEventQueryParams
+		if err := c.ShouldBindQuery(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+		models, total, err := services.TimelineEvent().ListTimelineEventsByCoupleID(
+			c.Request.Context(), req.CoupleID, req.Offset(), req.Limit())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		c.JSON(http.StatusOK,
+			dto.NewSuccessResponse(dto.NewPageResult(models, total, req.Page, req.PageSize)))
+
 	}
 }
 
@@ -35,8 +46,15 @@ func CreateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 // GetTimelineEventHandler gets a specific timeline event
 func GetTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement get timeline event logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("获取时间线事件成功"))
+		coupleID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "获取故事ID失败", err.Error()))
+		}
+		event, err := services.TimelineEvent().GetTimelineEventByID(c.Request.Context(), coupleID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "<UNK>", err.Error()))
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(event))
 	}
 }
 

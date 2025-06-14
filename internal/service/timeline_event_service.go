@@ -229,7 +229,11 @@ func (s *timelineEventService) associatePhotosVideos(ctx context.Context, eventI
 			TimelineEventID: eventID,
 			PhotoVideoID:    photoVideoID,
 		}
+		if s.eventPhotoVideoRepo == nil {
+			fmt.Println("eventPhotoVideoRepo is nil")
+		}
 		if err := s.eventPhotoVideoRepo.Create(ctx, eventPhotoVideo); err != nil {
+			fmt.Println(err.Error())
 			return err
 		}
 	}

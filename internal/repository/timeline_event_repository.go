@@ -109,7 +109,7 @@ func (r *timelineEventRepository) FindByCoupleID(ctx context.Context, coupleID i
 		return nil, 0, err
 	}
 
-	if err := r.DB().WithContext(ctx).Where("couple_id = ?", coupleID).Offset(offset).Limit(limit).Find(&events).Error; err != nil {
+	if err := r.DB().WithContext(ctx).Where("couple_id = ?", coupleID).Offset(offset).Limit(limit).Order("end_date DESC").Find(&events).Error; err != nil {
 		return nil, 0, err
 	}
 

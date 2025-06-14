@@ -58,12 +58,15 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	eventRoutes := protected.Group("/events")
 	{
 		eventRoutes.POST("/create", handlers.CreateTimelineEventHandler(services))
+		eventRoutes.GET("/page", handlers.PageTimelineEventsHandler(services))
+		eventRoutes.GET("/:id", handlers.GetTimelineEventHandler(services))
 	}
 
 	// Location routes
 	locationRoutes := protected.Group("/locations")
 	{
 		locationRoutes.GET("/list", handlers.ListLocationsHandler(services))
+		locationRoutes.GET("/:id", handlers.GetLocationHandler(services))
 		locationRoutes.POST("/create", handlers.CreateLocationHandler(services))
 	}
 

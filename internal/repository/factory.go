@@ -44,17 +44,18 @@ func (f *factory) TimelineEventPhotoVideo() TimelineEventPhotoVideoRepository {
 
 // NewFactory 创建仓库工厂
 func NewFactory(db *gorm.DB) Factory {
-	baseRepo := NewBaseRepository(db)
 	return &factory{
-		db:                      db,
-		coupleRepository:        NewCoupleRepository(db),
-		userRepository:          NewUserRepository(db),
-		locationRepository:      NewLocationRepository(db),
-		timelineEventRepository: NewTimelineEventRepository(db),
-		photoVideoRepository:    NewPhotoVideoRepository(db),
-		wishlistRepository:      NewWishlistRepository(db),
-		personalMediaRepository: NewGormPersonalMediaRepository(db),
-		coupleAlbumRepository:   NewCoupleAlbumRepository(baseRepo),
+		db:                                db,
+		coupleRepository:                  NewCoupleRepository(db),
+		userRepository:                    NewUserRepository(db),
+		locationRepository:                NewLocationRepository(db),
+		timelineEventRepository:           NewTimelineEventRepository(db),
+		photoVideoRepository:              NewPhotoVideoRepository(db),
+		wishlistRepository:                NewWishlistRepository(db),
+		personalMediaRepository:           NewGormPersonalMediaRepository(db),
+		coupleAlbumRepository:             NewCoupleAlbumRepository(db),
+		timelineEventLocationRepository:   NewTimelineEventLocationRepository(db),
+		timelineEventPhotoVideoRepository: NewTimelineEventPhotoVideoRepository(db),
 	}
 }
 

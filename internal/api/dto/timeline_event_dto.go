@@ -7,22 +7,24 @@ import (
 
 // CreateTimelineEventRequest 创建时间线事件的请求
 type CreateTimelineEventRequest struct {
-	CoupleID      int64   `json:"couple_id,string" binding:"required"`
-	EventDate     string  `json:"event_date" binding:"required"` // 格式：2006-01-02
-	Title         string  `json:"title" binding:"required,max=100"`
-	Content       string  `json:"content" binding:"required"`
-	CoverURL      string  `json:"cover_url,omitempty"`
-	LocationIDs   []int64 `json:"location_ids,omitempty"`
-	PhotoVideoIDs []int64 `json:"photo_video_ids,omitempty"`
+	CoupleID      int64      `json:"couple_id,string" binding:"required"`
+	StartDate     string     `json:"start_date" binding:"required"` // 格式：2006-01-02
+	EndDate       string     `json:"end_date" binding:"required"`
+	Title         string     `json:"title" binding:"required,max=100"`
+	Content       string     `json:"content" binding:"required"`
+	CoverURL      string     `json:"cover_url,omitempty"`
+	LocationIDs   Int64Array `json:"location_ids,omitempty"`
+	PhotoVideoIDs Int64Array `json:"photo_video_ids,omitempty"`
 }
 
 // UpdateTimelineEventRequest 更新时间线事件的请求
 type UpdateTimelineEventRequest struct {
-	EventDate     string  `json:"event_date,omitempty"` // 格式：2006-01-02
-	Title         string  `json:"title,omitempty" binding:"omitempty,max=100"`
-	Content       string  `json:"content,omitempty"`
-	LocationIDs   []int64 `json:"location_ids,omitempty"`
-	PhotoVideoIDs []int64 `json:"photo_video_ids,omitempty"`
+	Title         string     `json:"title,omitempty" binding:"omitempty,max=100"`
+	StartDate     string     `json:"start_date" binding:"required"` // 格式：2006-01-02
+	EndDate       string     `json:"end_date" binding:"required"`
+	Content       string     `json:"content,omitempty"`
+	LocationIDs   Int64Array `json:"location_ids,omitempty"`
+	PhotoVideoIDs Int64Array `json:"photo_video_ids,omitempty"`
 }
 
 // TimelineEventQueryParams 查询时间线事件的参数
@@ -37,14 +39,16 @@ type TimelineEventQueryParams struct {
 
 // ToModel 将创建请求转换为模型
 func (r *CreateTimelineEventRequest) ToModel() (*models.TimelineEvent, error) {
-	eventDate, err := time.Parse("2006-01-02", r.EventDate)
+	startDate, err := time.Parse("2006-01-02", r.StartDate)
+	endDate, err := time.Parse("2006-01-02", r.EndDate)
 	if err != nil {
 		return nil, err
 	}
 
 	return &models.TimelineEvent{
 		CoupleID:  r.CoupleID,
-		EventDate: eventDate,
+		StartDate: startDate,
+		EndDate:   endDate,
 		Title:     r.Title,
 		Content:   r.Content,
 		CoverURL:  r.CoverURL,
@@ -53,12 +57,19 @@ func (r *CreateTimelineEventRequest) ToModel() (*models.TimelineEvent, error) {
 
 // ApplyToModel 将更新请求应用到模型
 func (r *UpdateTimelineEventRequest) ApplyToModel(event *models.TimelineEvent) error {
-	if r.EventDate != "" {
-		eventDate, err := time.Parse("2006-01-02", r.EventDate)
+	if r.StartDate != "" {
+		eventDate, err := time.Parse("2006-01-02", r.StartDate)
 		if err != nil {
 			return err
 		}
-		event.EventDate = eventDate
+		event.StartDate = eventDate
+	}
+	if r.EndDate != "" {
+		eventDate, err := time.Parse("2006-01-02", r.EndDate)
+		if err != nil {
+			return err
+		}
+		event.EndDate = eventDate
 	}
 
 	if r.Title != "" {
@@ -76,7 +87,8 @@ func (r *UpdateTimelineEventRequest) ApplyToModel(event *models.TimelineEvent) e
 type TimelineEventResponse struct {
 	ID           int64               `json:"id,string"`
 	CoupleID     int64               `json:"couple_id,string"`
-	EventDate    string              `json:"event_date"` // 格式：2006-01-02
+	StartDate    string              `json:"start_date" binding:"required"` // 格式：2006-01-02
+	EndDate      string              `json:"end_date" binding:"required"`
 	Title        string              `json:"title"`
 	Content      string              `json:"content"`
 	Locations    []models.Location   `json:"locations,omitempty"`
@@ -90,7 +102,8 @@ func TimelineEventResponseFromModel(event *models.TimelineEvent) TimelineEventRe
 	return TimelineEventResponse{
 		ID:           event.ID,
 		CoupleID:     event.CoupleID,
-		EventDate:    event.EventDate.Format("2006-01-02"),
+		StartDate:    event.StartDate.Format("2006-01-02"),
+		EndDate:      event.EndDate.Format("2006-01-02"),
 		Title:        event.Title,
 		Content:      event.Content,
 		Locations:    event.Locations,
