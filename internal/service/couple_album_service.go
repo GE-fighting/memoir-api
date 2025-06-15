@@ -17,6 +17,7 @@ type CoupleAlbumService interface {
 	Update(ctx context.Context, id int64, req *dto.UpdateCoupleAlbumRequest) (*models.CoupleAlbum, error)
 	Delete(ctx context.Context, id int64) error
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
+	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 }
 
 // coupleAlbumService 情侣相册服务实现
@@ -24,6 +25,10 @@ type coupleAlbumService struct {
 	*BaseService
 	coupleAlbumRepo repository.CoupleAlbumRepository
 	userService     UserService
+}
+
+func (s *coupleAlbumService) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
+	return s.coupleAlbumRepo.CountByCoupleID(ctx, coupleID)
 }
 
 // NewCoupleAlbumService 创建情侣相册服务

@@ -40,6 +40,12 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	protected := v1.Group("")
 	protected.Use(middleware.JWTAuthMiddleware(services))
 
+	//Dashboard routes
+	dashboardRoutes := protected.Group("/dashboard")
+	{
+		dashboardRoutes.GET("", handlers.GetDashboardDataHandler(services))
+	}
+
 	// User routes
 	userRoutes := protected.Group("/users")
 	{

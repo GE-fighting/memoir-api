@@ -22,6 +22,7 @@ type PhotoVideoService interface {
 	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error)
 	UpdatePhotoVideo(ctx context.Context, photoVideo *models.PhotoVideo) error
 	DeletePhotoVideo(ctx context.Context, id int64) error
+	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 }
 
 // photoVideoService 照片和视频服务实现
@@ -30,6 +31,10 @@ type photoVideoService struct {
 	photoVideoRepo repository.PhotoVideoRepository
 	userRepo       repository.UserRepository
 	ablumRepo      repository.CoupleAlbumRepository
+}
+
+func (s *photoVideoService) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
+	return s.photoVideoRepo.CountByCoupleID(ctx, coupleID)
 }
 
 func (s *photoVideoService) Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error) {

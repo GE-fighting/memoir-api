@@ -14,10 +14,17 @@ type CoupleAlbumRepository interface {
 	Update(ctx context.Context, album *models.CoupleAlbum) error
 	Delete(ctx context.Context, id int64) error
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
+	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 }
 
 type coupleAlbumRepository struct {
 	*BaseRepository
+}
+
+func (r *coupleAlbumRepository) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&models.CoupleAlbum{}).Where("couple_id = ?", coupleID).Count(&count).Error
+	return count, err
 }
 
 func NewCoupleAlbumRepository(db *gorm.DB) CoupleAlbumRepository {

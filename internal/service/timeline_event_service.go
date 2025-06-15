@@ -22,6 +22,7 @@ type TimelineEventService interface {
 	ListTimelineEventsByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.TimelineEvent, int64, error)
 	UpdateTimelineEvent(ctx context.Context, event *models.TimelineEvent, locationIDs, photoVideoIDs []int64) (*models.TimelineEvent, error)
 	DeleteTimelineEvent(ctx context.Context, id int64) error
+	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 }
 
 // timelineEventService 时间轴事件服务实现
@@ -32,6 +33,10 @@ type timelineEventService struct {
 	photoVideoRepo      repository.PhotoVideoRepository
 	eventLocationRepo   repository.TimelineEventLocationRepository
 	eventPhotoVideoRepo repository.TimelineEventPhotoVideoRepository
+}
+
+func (s *timelineEventService) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
+	return s.timelineEventRepo.CountByCoupleID(ctx, coupleID)
 }
 
 // NewTimelineEventService 创建时间轴事件服务

@@ -22,7 +22,7 @@ type TimelineEventRepository interface {
 	Update(ctx context.Context, event *models.TimelineEvent) error
 	Delete(ctx context.Context, id int64) error
 	FindByCoupleID(ctx context.Context, coupleID int64, offset, limit int) ([]*models.TimelineEvent, int64, error)
-
+	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 	// 关联查询方法
 	FindWithLocationsAndPhotos(ctx context.Context, id int64) (*models.TimelineEvent, error)
 	FindWithLocationsAndPhotosByJoins(ctx context.Context, id int64) (*models.TimelineEvent, error)
@@ -34,6 +34,12 @@ type TimelineEventRepository interface {
 // timelineEventRepository 时间轴事件仓库实现
 type timelineEventRepository struct {
 	*BaseRepository
+}
+
+func (r *timelineEventRepository) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
+	var count int64
+	err := r.DB().WithContext(ctx).Model(&models.TimelineEvent{}).Where("couple_id = ?", coupleID).Count(&count).Error
+	return count, err
 }
 
 // NewTimelineEventRepository 创建时间轴事件仓库
