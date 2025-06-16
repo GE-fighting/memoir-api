@@ -15,6 +15,7 @@ type Factory interface {
 	Wishlist() WishlistService
 	PersonalMedia() PersonalMediaService
 	CoupleAlbum() CoupleAlbumService
+	Dashboard() DashboardService
 }
 
 // factory 服务工厂实现
