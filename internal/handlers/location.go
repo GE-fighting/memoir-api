@@ -63,7 +63,16 @@ func UpdateLocationHandler(services service.Factory) gin.HandlerFunc {
 // DeleteLocationHandler deletes a location
 func DeleteLocationHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement delete location logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除位置成功"))
+		locationId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "地点ID出错", err.Error()))
+		}
+		err = services.Location().DeleteLocation(c.Request.Context(), locationId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除地点出错", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除地点成功"))
+
 	}
 }
