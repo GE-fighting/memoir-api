@@ -164,3 +164,19 @@ func DeleteCoupleAlbumHandler(services service.Factory) gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.NewSuccessResponse(nil))
 	}
 }
+
+func DeleteCoupleAlbumPhotosHandler(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var delReq dto.DeleteCoupleAlbumPhotosRequest
+		if err := c.ShouldBindJSON(&delReq); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		// 删除相册照片
+		if err := services.PhotoVideo().BatchDeletePhotoVideo(c.Request.Context(), delReq.PhotoVideoIDs); err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除相册照片失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(nil))
+	}
+}

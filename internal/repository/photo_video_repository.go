@@ -22,6 +22,7 @@ type PhotoVideoRepository interface {
 	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) ([]*models.PhotoVideo, int64, error)
 	Update(ctx context.Context, photoVideo *models.PhotoVideo) error
 	Delete(ctx context.Context, id int64) error
+	BatchDelete(ctx context.Context, ids []int64) error
 	FindByIDs(ctx context.Context, ids []int64) ([]models.PhotoVideo, error)
 	CountByCoupleID(ctx context.Context, id int64) (int64, error)
 }
@@ -29,6 +30,11 @@ type PhotoVideoRepository interface {
 // photoVideoRepository 照片和视频仓库实现
 type photoVideoRepository struct {
 	*BaseRepository
+}
+
+func (r *photoVideoRepository) BatchDelete(ctx context.Context, ids []int64) error {
+	return r.DB().WithContext(ctx).Delete(&models.PhotoVideo{}, "id in ?", ids).Error
+
 }
 
 func (r *photoVideoRepository) CountByCoupleID(ctx context.Context, id int64) (int64, error) {

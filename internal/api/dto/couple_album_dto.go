@@ -18,6 +18,11 @@ type UpdateCoupleAlbumRequest struct {
 	CoverURL    *string `json:"cover_url,omitempty"`
 }
 
+type DeleteCoupleAlbumPhotosRequest struct {
+	AlbumID       int64      `json:"album_id,string" binding:"required"`
+	PhotoVideoIDs Int64Array `json:"photo_video_ids" binding:"required"`
+}
+
 type CoupleAlbumDTO struct {
 	ID          int64           `json:"id"`
 	CoupleID    int64           `json:"couple_id,string"`

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"memoir-api/internal/api/dto"
 	"memoir-api/internal/models"
@@ -18,6 +19,7 @@ type CoupleService interface {
 	DeleteCouple(ctx context.Context, id int64) error
 	ListCouples(ctx context.Context, offset, limit int) ([]*models.Couple, int64, error)
 	GetCoupleUsers(ctx context.Context, coupleID int64) ([]*models.User, error)
+	GetCoupleInfo(ctx context.Context, userId int64) (*dto.CoupleInfoDTO, error)
 }
 
 // coupleService 情侣关系服务实现
@@ -25,6 +27,51 @@ type coupleService struct {
 	*BaseService
 	coupleRepo repository.CoupleRepository
 	userRepo   repository.UserRepository
+}
+
+func (s *coupleService) GetCoupleInfo(ctx context.Context, userId int64) (*dto.CoupleInfoDTO, error) {
+	user, err := s.userRepo.GetByID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if user.CoupleID == 0 {
+		return nil, errors.New("用户没有情侣关系")
+	}
+	couple, err := s.coupleRepo.GetByID(ctx, user.CoupleID)
+	if err != nil {
+		return nil, err
+	}
+	coupleUsers, err := s.GetCoupleUsers(ctx, couple.ID)
+	if err != nil {
+		return nil, err
+	}
+	if len(coupleUsers) == 0 || len(coupleUsers) > 2 {
+		return nil, errors.New("情侣关系异常")
+	}
+	var coupleName string
+	if len(coupleUsers) == 2 {
+		coupleName = coupleUsers[0].Username + " & " + coupleUsers[1].Username
+	} else {
+		coupleName = coupleUsers[0].Username
+	}
+	var coupleDays int
+	if !couple.AnniversaryDate.IsZero() {
+		coupleDays = int(time.Since(couple.AnniversaryDate).Hours() / 24)
+		if coupleDays < 0 {
+			coupleDays = 0
+		}
+	}
+	var anniversaryDate string
+	if !couple.AnniversaryDate.IsZero() {
+		anniversaryDate = couple.AnniversaryDate.Format("2006-01-02")
+	}
+	return &dto.CoupleInfoDTO{
+		couple.ID,
+		coupleName,
+		coupleDays,
+		anniversaryDate,
+	}, nil
+
 }
 
 // NewCoupleService 创建情侣关系服务

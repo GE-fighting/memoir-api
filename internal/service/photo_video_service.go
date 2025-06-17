@@ -22,6 +22,7 @@ type PhotoVideoService interface {
 	Query(ctx context.Context, params *dto.PhotoVideoQueryParams) (*dto.PageResult, error)
 	UpdatePhotoVideo(ctx context.Context, photoVideo *models.PhotoVideo) error
 	DeletePhotoVideo(ctx context.Context, id int64) error
+	BatchDeletePhotoVideo(ctx context.Context, ids []int64) error
 	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 }
 
@@ -31,6 +32,10 @@ type photoVideoService struct {
 	photoVideoRepo repository.PhotoVideoRepository
 	userRepo       repository.UserRepository
 	ablumRepo      repository.CoupleAlbumRepository
+}
+
+func (s *photoVideoService) BatchDeletePhotoVideo(ctx context.Context, ids []int64) error {
+	return s.photoVideoRepo.BatchDelete(ctx, ids)
 }
 
 func (s *photoVideoService) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {

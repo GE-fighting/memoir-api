@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  # Memoir API Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memoir-api
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -69,7 +69,15 @@ func UpdateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 // DeleteTimelineEventHandler deletes a timeline event
 func DeleteTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement delete timeline event logic
+		evevtId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "获取时间线事件ID失败", err.Error()))
+		}
+		err = services.TimelineEvent().DeleteTimelineEvent(c.Request.Context(), evevtId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除时间线事件失败", err.Error()))
+			return
+		}
 		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除时间线事件成功"))
 	}
 }

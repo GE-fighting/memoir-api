@@ -14,11 +14,17 @@ type PersonalMediaService interface {
 	CreateWithURL(ctx context.Context, request dto.CreatePersonalMediaWithURLRequest) (*models.PersonalMedia, error)
 	// 分页查询个人媒体
 	PageQuery(ctx context.Context, pageRequest dto.QueryPersonalMediaRequest) (*dto.PageResult, error)
+	// 删除个人媒体
+	Delete(ctx context.Context, id int64) error
 }
 
 // DefaultPersonalMediaService 个人媒体服务的默认实现
 type DefaultPersonalMediaService struct {
 	repo repository.PersonalMediaRepository
+}
+
+func (s *DefaultPersonalMediaService) Delete(ctx context.Context, id int64) error {
+	return s.repo.Delete(ctx, id)
 }
 
 // NewPersonalMediaService 创建个人媒体服务实例

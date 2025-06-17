@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -53,5 +54,21 @@ func PageQueryPersonalMediaHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, dto.NewSuccessResponse(pageResult))
+	}
+}
+
+func DeletePersonalMediaHandler(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mediaID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "无效的个人媒体ID", err.Error()))
+			return
+		}
+		err = services.PersonalMedia().Delete(c.Request.Context(), mediaID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除个人媒体失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("删除个人媒体成功"))
 	}
 }

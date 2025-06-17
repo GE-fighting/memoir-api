@@ -11,6 +11,13 @@ type CreateCoupleRequest struct {
 	AnniversaryDate string `json:"anniversary_date" binding:"required"`
 }
 
+type CoupleInfoDTO struct {
+	CoupleId        int64  `json:"couple_id,string"`
+	CoupleName      string `json:"couple_name"`
+	CoupleDays      int    `json:"couple_days"`
+	AnniversaryDate string `json:"anniversary_date"`
+}
+
 func (r *CreateCoupleRequest) ToCouple() (models.Couple, error) {
 	anniversaryDate, err := time.Parse("2006-01-02", r.AnniversaryDate)
 	if err != nil {

@@ -58,6 +58,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	{
 		coupleRoutes.POST("/create", handlers.CreateCoupleHandler(services))
 		coupleRoutes.GET("/sts", handlers.GenerateCoupleSTSToken(services))
+		coupleRoutes.GET("/info", handlers.GetCoupleInfoHandler(services))
 	}
 
 	// Timeline event routes
@@ -66,6 +67,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		eventRoutes.POST("/create", handlers.CreateTimelineEventHandler(services))
 		eventRoutes.GET("/page", handlers.PageTimelineEventsHandler(services))
 		eventRoutes.GET("/:id", handlers.GetTimelineEventHandler(services))
+		eventRoutes.DELETE("/:id", handlers.DeleteTimelineEventHandler(services))
 	}
 
 	// Location routes
@@ -81,7 +83,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	mediaRoutes := protected.Group("/media")
 	{
 		mediaRoutes.POST("/create", handlers.CreatePhotoVideoHandler(services))
-		mediaRoutes.GET("/page", handlers.PageQueryPersonalMediaHandler(services))
+		mediaRoutes.GET("/page", handlers.ListPhotoVideoHandler(services))
 	}
 
 	// 个人媒体路由
@@ -90,6 +92,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	{
 		personalMediaRoutes.POST("/create", handlers.CreatePersonalMediaWithURLHandler(services))
 		personalMediaRoutes.GET("/page", handlers.PageQueryPersonalMediaHandler(services))
+		personalMediaRoutes.DELETE("/:id", handlers.DeletePersonalMediaHandler(services))
 	}
 
 	// Wishlist routes
@@ -108,6 +111,8 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		albumRoutes.GET("/list", handlers.ListCoupleAlbumsHandler(services))
 		albumRoutes.POST("/create", handlers.CreateCoupleAlbumHandler(services))
 		albumRoutes.GET("/photos", handlers.GetCoupleAlbumWithPhotosHandler(services))
+		albumRoutes.DELETE("/:id", handlers.DeleteCoupleAlbumHandler(services))
+		albumRoutes.POST("/deletePhotos", handlers.DeleteCoupleAlbumPhotosHandler(services))
 	}
 
 	// OSS (Aliyun Object Storage Service) routes
