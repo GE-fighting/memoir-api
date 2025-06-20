@@ -173,7 +173,7 @@ func DeleteCoupleAlbumPhotosHandler(services service.Factory) gin.HandlerFunc {
 			return
 		}
 		// 删除相册照片
-		if err := services.PhotoVideo().BatchDeletePhotoVideo(c.Request.Context(), delReq.PhotoVideoIDs); err != nil {
+		if err := services.CoupleAlbum().BatchDeletePhotoVideo(c.Request.Context(), &delReq); err != nil {
 			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "删除相册照片失败", err.Error()))
 			return
 		}

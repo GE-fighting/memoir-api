@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"memoir-api/internal/api/dto"
+	"memoir-api/internal/logger"
 	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
 )
@@ -18,13 +19,33 @@ type CoupleAlbumService interface {
 	Delete(ctx context.Context, id int64) error
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
 	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
+	BatchDeletePhotoVideo(ctx context.Context, deleteReq *dto.DeleteCoupleAlbumPhotosRequest) error
 }
 
 // coupleAlbumService 情侣相册服务实现
 type coupleAlbumService struct {
 	*BaseService
-	coupleAlbumRepo repository.CoupleAlbumRepository
-	userService     UserService
+	coupleAlbumRepo   repository.CoupleAlbumRepository
+	userService       UserService
+	photoVideoService PhotoVideoService
+}
+
+func (s *coupleAlbumService) BatchDeletePhotoVideo(ctx context.Context, deleteReq *dto.DeleteCoupleAlbumPhotosRequest) error {
+	err := s.photoVideoService.BatchDeletePhotoVideo(ctx, deleteReq.PhotoVideoIDs)
+	if err != nil {
+		logger.Error(err, "Failed to delete photos/videos: %v")
+		return err
+	}
+	album, err := s.GetByID(ctx, deleteReq.AlbumID)
+	if err != nil {
+		return err
+	}
+	album.Count -= len(deleteReq.PhotoVideoIDs)
+	err = s.coupleAlbumRepo.Update(ctx, album)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *coupleAlbumService) CountByCoupleID(ctx context.Context, coupleID int64) (int64, error) {
@@ -35,11 +56,13 @@ func (s *coupleAlbumService) CountByCoupleID(ctx context.Context, coupleID int64
 func NewCoupleAlbumService(
 	coupleAlbumRepo repository.CoupleAlbumRepository,
 	userService UserService,
+	photoVideoService PhotoVideoService,
 ) CoupleAlbumService {
 	return &coupleAlbumService{
-		BaseService:     NewBaseService(coupleAlbumRepo),
-		coupleAlbumRepo: coupleAlbumRepo,
-		userService:     userService,
+		BaseService:       NewBaseService(coupleAlbumRepo),
+		coupleAlbumRepo:   coupleAlbumRepo,
+		userService:       userService,
+		photoVideoService: photoVideoService,
 	}
 }
 

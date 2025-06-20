@@ -45,7 +45,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo(), repoFactory.User(), repoFactory.CoupleAlbum())
 	wishlistService := NewWishlistService(repoFactory.Wishlist())
 	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())
-	coupleAlbumService := NewCoupleAlbumService(repoFactory.CoupleAlbum(), userService)
+	coupleAlbumService := NewCoupleAlbumService(repoFactory.CoupleAlbum(), userService, photoVideoService)
 	dashboardService := NewDashboardService(userService, coupleAlbumService, coupleService, photoVideoService, timelineEventService, locationService)
 
 	return &factory{
