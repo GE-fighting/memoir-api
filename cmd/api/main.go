@@ -107,5 +107,3 @@ func main() {
 	}
 	logger.Info("Server exiting")
 }
-
-

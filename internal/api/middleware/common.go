@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"memoir-api/internal/config"
+	"memoir-api/internal/logger"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 )
 
 // ApplyMiddleware applies all middleware to the given router
@@ -32,16 +32,36 @@ func ApplyMiddleware(router *gin.Engine, cfg *config.Config) {
 // LoggerMiddleware logs HTTP requests with details
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get or generate request ID
+		requestID := c.GetHeader("X-Request-ID")
+		if requestID == "" {
+			requestID = generateRequestID()
+			c.Request.Header.Set("X-Request-ID", requestID)
+		}
+
+		// Set requestID in the response header
+		c.Writer.Header().Set("X-Request-ID", requestID)
+		c.Set("requestID", requestID)
+
+		// Create a request-scoped logger with the request ID
+		reqLogger := logger.GetLogger("http").With("request_id", requestID)
+
+		// Store the logger in the context
+		c.Request = c.Request.WithContext(reqLogger.WithContext(c.Request.Context()))
+
+		// Log the incoming request
+		reqLogger.Info("Request started", map[string]interface{}{
+			"method": c.Request.Method,
+			"path":   c.Request.URL.Path,
+			"query":  c.Request.URL.RawQuery,
+			"ip":     c.ClientIP(),
+		})
+
 		// Start timer
 		start := time.Now()
-		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
 
 		// Process request
 		c.Next()
-
-		// Get request ID
-		requestID, _ := c.Get("requestID")
 
 		// Calculate latency
 		latency := time.Since(start)
@@ -49,28 +69,23 @@ func LoggerMiddleware() gin.HandlerFunc {
 		// Get status code
 		statusCode := c.Writer.Status()
 
-		// Get client IP
-		clientIP := c.ClientIP()
-
-		// Get method
-		method := c.Request.Method
-
-		// Construct query if present
-		if raw != "" {
-			path = path + "?" + raw
+		// Log the completed request
+		logFields := map[string]interface{}{
+			"status":  statusCode,
+			"latency": latency,
+			"size":    c.Writer.Size(),
+			"method":  c.Request.Method,
+			"path":    c.Request.URL.Path,
 		}
 
-		// Log the request
-		log.Info().
-			Str("component", "http").
-			Str("request_id", requestID.(string)).
-			Int("status", statusCode).
-			Str("method", method).
-			Str("path", path).
-			Str("ip", clientIP).
-			Dur("latency", latency).
-			Int("size", c.Writer.Size()).
-			Msg("HTTP Request")
+		// Determine log level based on status code
+		if statusCode >= 500 {
+			reqLogger.Error(c.Errors.Last(), "Request failed", logFields)
+		} else if statusCode >= 400 {
+			reqLogger.Warn("Request completed with client error", logFields)
+		} else {
+			reqLogger.Info("Request completed successfully", logFields)
+		}
 	}
 }
 
