@@ -20,6 +20,7 @@ type CoupleAlbumService interface {
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
 	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
 	BatchDeletePhotoVideo(ctx context.Context, deleteReq *dto.DeleteCoupleAlbumPhotosRequest) error
+	PageCoupleMedia(ctx context.Context, param *dto.CoupleAlbumQueryParams) ([]*models.PhotoVideo, int64, error)
 }
 
 // coupleAlbumService 情侣相册服务实现
@@ -145,4 +146,9 @@ func (s *coupleAlbumService) Delete(ctx context.Context, id int64) error {
 // GetWithPhotos 获取相册及其包含的照片和视频
 func (s *coupleAlbumService) GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error) {
 	return s.coupleAlbumRepo.GetWithPhotos(ctx, id)
+}
+
+// 分页查询couple的媒体列表
+func (s *coupleAlbumService) PageCoupleMedia(ctx context.Context, param *dto.CoupleAlbumQueryParams) ([]*models.PhotoVideo, int64, error) {
+	return s.coupleAlbumRepo.PageCoupleMedia(ctx, param.CoupleID, param.Limit(), param.Offset())
 }
