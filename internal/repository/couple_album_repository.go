@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"memoir-api/internal/models"
+
+	"gorm.io/gorm"
 )
 
 type CoupleAlbumRepository interface {
@@ -15,6 +16,7 @@ type CoupleAlbumRepository interface {
 	Delete(ctx context.Context, id int64) error
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
 	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
+	PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int) ([]*models.PhotoVideo, int64, error)
 }
 
 type coupleAlbumRepository struct {
@@ -78,4 +80,26 @@ func (r *coupleAlbumRepository) GetWithPhotos(ctx context.Context, id int64) (*m
 
 	album.PhotosVideos = photos
 	return &album, nil
+}
+
+func (r *coupleAlbumRepository) PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int) ([]*models.PhotoVideo, int64, error) {
+	var photos []*models.PhotoVideo
+	var total int64
+
+	// 获取总数
+	if err := r.DB().WithContext(ctx).Model(&models.PhotoVideo{}).Where("couple_id = ?", coupleID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 获取列表
+	query := r.DB().WithContext(ctx).Where("couple_id = ?", coupleID).Order("created_at DESC")
+	if offset >= 0 && limit > 0 {
+		query = query.Offset(offset).Limit(limit)
+	}
+
+	if err := query.Find(&photos).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return photos, total, nil
 }

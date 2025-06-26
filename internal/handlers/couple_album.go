@@ -180,3 +180,20 @@ func DeleteCoupleAlbumPhotosHandler(services service.Factory) gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.NewSuccessResponse(nil))
 	}
 }
+
+// 分页查询couple的媒体列表
+func PageCoupleMedia(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.CoupleAlbumQueryParams
+		if err := c.ShouldBindQuery(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		media, total, err := services.CoupleAlbum().PageCoupleMedia(c.Request.Context(), &req)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "查询媒体失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(dto.NewPageResult(media, total, req.Page, req.PageSize)))
+	}
+}
