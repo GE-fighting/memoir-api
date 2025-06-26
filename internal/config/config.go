@@ -29,6 +29,7 @@ type DBConfig struct {
 	MaxOpenConns    int    // 最大打开连接数
 	MaxIdleConns    int    // 最大空闲连接数
 	ConnMaxLifetime int    // 连接最大生存时间(分钟)
+	LogLevel        string // 数据库日志级别: debug, info, warn, error, silent
 }
 
 // RedisConfig 存储Redis配置
@@ -138,6 +139,7 @@ func New() *Config {
 			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", "25"),
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", "5"),
 			ConnMaxLifetime: getEnvInt("DB_CONN_MAX_LIFETIME", "60"), // 默认60分钟
+			LogLevel:        getEnv("DB_LOGLEVEL", "debug"),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),

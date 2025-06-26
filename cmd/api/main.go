@@ -64,7 +64,7 @@ func main() {
 	serviceFactory := service.NewFactory(repoFactory)
 
 	// Setup Gin router
-	router := gin.Default()
+	router := gin.New()
 
 	// Register API routes
 	api.RegisterRoutes(router, serviceFactory, dbConn, cfg)
@@ -80,7 +80,7 @@ func main() {
 
 	// Start server in a goroutine
 	go func() {
-		logger.Info(fmt.Sprintf("Starting Memoir API server on port %d...", cfg.Server.Port))
+		logger.Info("Starting Memoir API server", "port", cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal(err, "Failed to start server")
 		}

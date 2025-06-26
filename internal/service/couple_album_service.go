@@ -33,7 +33,7 @@ type coupleAlbumService struct {
 func (s *coupleAlbumService) BatchDeletePhotoVideo(ctx context.Context, deleteReq *dto.DeleteCoupleAlbumPhotosRequest) error {
 	err := s.photoVideoService.BatchDeletePhotoVideo(ctx, deleteReq.PhotoVideoIDs)
 	if err != nil {
-		logger.Error(err, "Failed to delete photos/videos: %v")
+		logger.Error(err, "Failed to delete photos/videos")
 		return err
 	}
 	album, err := s.GetByID(ctx, deleteReq.AlbumID)

@@ -43,10 +43,10 @@ func NewCoupleRepository(db *gorm.DB) CoupleRepository {
 func (r *coupleRepository) Create(ctx context.Context, couple *models.Couple) error {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Creating couple relationship", map[string]interface{}{
-		"pair_token":       couple.PairToken,
-		"anniversary_date": couple.AnniversaryDate,
-	})
+	log.Debug("Creating couple relationship",
+		"pair_token", couple.PairToken,
+		"anniversary_date", couple.AnniversaryDate,
+	)
 
 	err := r.DB().WithContext(ctx).Create(couple).Error
 	if err != nil {
@@ -54,9 +54,7 @@ func (r *coupleRepository) Create(ctx context.Context, couple *models.Couple) er
 		return err
 	}
 
-	log.Info("Created couple relationship successfully", map[string]interface{}{
-		"couple_id": couple.ID,
-	})
+	log.Info("Created couple relationship successfully", "couple_id", couple.ID)
 
 	return nil
 }
@@ -65,22 +63,16 @@ func (r *coupleRepository) Create(ctx context.Context, couple *models.Couple) er
 func (r *coupleRepository) GetByID(ctx context.Context, id int64) (*models.Couple, error) {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Getting couple by ID", map[string]interface{}{
-		"couple_id": id,
-	})
+	log.Debug("Getting couple by ID", "couple_id", id)
 
 	var couple models.Couple
 	err := r.DB().WithContext(ctx).First(&couple, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Debug("Couple not found", map[string]interface{}{
-				"couple_id": id,
-			})
+			log.Debug("Couple not found", "couple_id", id)
 			return nil, ErrCoupleNotFound
 		}
-		log.Error(err, "Failed to get couple by ID", map[string]interface{}{
-			"couple_id": id,
-		})
+		log.Error(err, "Failed to get couple by ID", "couple_id", id)
 		return nil, err
 	}
 
@@ -91,9 +83,7 @@ func (r *coupleRepository) GetByID(ctx context.Context, id int64) (*models.Coupl
 func (r *coupleRepository) GetByPairToken(ctx context.Context, pairToken string) (*models.Couple, error) {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Getting couple by pair token", map[string]interface{}{
-		"pair_token": pairToken,
-	})
+	log.Debug("Getting couple by pair token", "pair_token", pairToken)
 
 	var couple models.Couple
 	err := r.DB().WithContext(ctx).Where("pair_token = ?", pairToken).First(&couple).Error
@@ -113,10 +103,7 @@ func (r *coupleRepository) GetByPairToken(ctx context.Context, pairToken string)
 func (r *coupleRepository) List(ctx context.Context, offset, limit int) ([]*models.Couple, int64, error) {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Listing couples", map[string]interface{}{
-		"offset": offset,
-		"limit":  limit,
-	})
+	log.Debug("Listing couples", "offset", offset, "limit", limit)
 
 	var couples []*models.Couple
 	var total int64
@@ -138,10 +125,7 @@ func (r *coupleRepository) List(ctx context.Context, offset, limit int) ([]*mode
 		return nil, 0, err
 	}
 
-	log.Debug("Listed couples successfully", map[string]interface{}{
-		"count": len(couples),
-		"total": total,
-	})
+	log.Debug("Listed couples successfully", "count", len(couples), "total", total)
 
 	return couples, total, nil
 }
@@ -150,27 +134,19 @@ func (r *coupleRepository) List(ctx context.Context, offset, limit int) ([]*mode
 func (r *coupleRepository) Update(ctx context.Context, couple *models.Couple) error {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Updating couple", map[string]interface{}{
-		"couple_id": couple.ID,
-	})
+	log.Debug("Updating couple", "couple_id", couple.ID)
 
 	result := r.DB().WithContext(ctx).Save(couple)
 	if result.Error != nil {
-		log.Error(result.Error, "Failed to update couple", map[string]interface{}{
-			"couple_id": couple.ID,
-		})
+		log.Error(result.Error, "Failed to update couple", "couple_id", couple.ID)
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		log.Debug("No couple updated, couple not found", map[string]interface{}{
-			"couple_id": couple.ID,
-		})
+		log.Debug("No couple updated, couple not found", "couple_id", couple.ID)
 		return ErrCoupleNotFound
 	}
 
-	log.Info("Updated couple successfully", map[string]interface{}{
-		"couple_id": couple.ID,
-	})
+	log.Info("Updated couple successfully", "couple_id", couple.ID)
 
 	return nil
 }
@@ -179,27 +155,19 @@ func (r *coupleRepository) Update(ctx context.Context, couple *models.Couple) er
 func (r *coupleRepository) Delete(ctx context.Context, id int64) error {
 	log := logger.FromContext(ctx).WithComponent("couple_repository")
 
-	log.Debug("Deleting couple", map[string]interface{}{
-		"couple_id": id,
-	})
+	log.Debug("Deleting couple", "couple_id", id)
 
 	result := r.DB().WithContext(ctx).Delete(&models.Couple{}, id)
 	if result.Error != nil {
-		log.Error(result.Error, "Failed to delete couple", map[string]interface{}{
-			"couple_id": id,
-		})
+		log.Error(result.Error, "Failed to delete couple", "couple_id", id)
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		log.Debug("No couple deleted, couple not found", map[string]interface{}{
-			"couple_id": id,
-		})
+		log.Debug("No couple deleted, couple not found", "couple_id", id)
 		return ErrCoupleNotFound
 	}
 
-	log.Info("Deleted couple successfully", map[string]interface{}{
-		"couple_id": id,
-	})
+	log.Info("Deleted couple successfully", "couple_id", id)
 
 	return nil
 }

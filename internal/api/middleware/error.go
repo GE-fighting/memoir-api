@@ -27,10 +27,10 @@ func ErrorMiddleware() gin.HandlerFunc {
 				}
 
 				// 记录错误和堆栈
-				logger.Error(nil, "Panic recovered", map[string]interface{}{
-					"panic": errMsg,
-					"stack": string(debug.Stack()),
-				})
+				logger.Error(nil, "Panic recovered",
+					"panic", errMsg,
+					"stack", string(debug.Stack()),
+				)
 
 				// 返回通用 500 错误
 				response := dto.NewErrorResponse(http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "An unexpected error occurred")

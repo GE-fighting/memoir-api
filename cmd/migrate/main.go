@@ -9,7 +9,6 @@ import (
 	"memoir-api/internal/models"
 	"os"
 
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -80,7 +79,7 @@ func main() {
 
 // migrateUp 执行数据库迁移（创建/更新表）
 func migrateUp(db *gorm.DB) error {
-	log.Info().Msg("Running database migrations...")
+	logger.Info("Running database migrations...")
 
 	// 使用AutoMigrate进行增量迁移（添加表/列，但不删除）
 	if err := db.AutoMigrate(
@@ -98,13 +97,13 @@ func migrateUp(db *gorm.DB) error {
 		return fmt.Errorf("failed to migrate tables: %w", err)
 	}
 
-	log.Info().Msg("Database migrations completed successfully")
+	logger.Info("Database migrations completed successfully")
 	return nil
 }
 
 // migrateDown 回滚数据库迁移（删除表）
 func migrateDown(db *gorm.DB) error {
-	log.Info().Msg("Rolling back database migrations...")
+	logger.Info("Rolling back database migrations...")
 
 	// 按依赖关系逆序删除表
 	tables := []interface{}{
@@ -120,19 +119,19 @@ func migrateDown(db *gorm.DB) error {
 
 	for _, table := range tables {
 		if err := db.Migrator().DropTable(table); err != nil {
-			log.Warn().Err(err).Msgf("Failed to drop table for %T", table)
+			logger.Warn("Failed to drop table", "table", fmt.Sprintf("%T", table), "error", err)
 		} else {
-			log.Info().Msgf("Dropped table for %T", table)
+			logger.Info("Dropped table", "table", fmt.Sprintf("%T", table))
 		}
 	}
 
-	log.Info().Msg("Database rollback completed")
+	logger.Info("Database rollback completed")
 	return nil
 }
 
 // migrateStatus 检查数据库迁移状态
 func migrateStatus(db *gorm.DB) error {
-	log.Info().Msg("Checking database migration status...")
+	logger.Info("Checking database migration status...")
 
 	// 定义模型和对应的表名
 	modelInfo := []struct {
@@ -151,9 +150,9 @@ func migrateStatus(db *gorm.DB) error {
 
 	for _, info := range modelInfo {
 		if db.Migrator().HasTable(info.model) {
-			log.Info().Msgf("✓ Table exists: %s", info.tableName)
+			logger.Info("Table exists", "table", info.tableName)
 		} else {
-			log.Info().Msgf("✗ Table missing: %s", info.tableName)
+			logger.Warn("Table missing", "table", info.tableName)
 		}
 	}
 

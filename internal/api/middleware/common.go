@@ -16,14 +16,14 @@ func ApplyMiddleware(router *gin.Engine, cfg *config.Config) {
 	// Apply recovery and error middleware
 	router.Use(ErrorMiddleware())
 
+	// Apply request ID middleware
+	router.Use(RequestIDMiddleware())
+
 	// Apply logger middleware with request details
 	router.Use(LoggerMiddleware())
 
 	// Apply CORS middleware
 	router.Use(CorsMiddleware(cfg))
-
-	// Apply request ID middleware
-	router.Use(RequestIDMiddleware())
 
 	// Apply body size limiting middleware
 	router.Use(BodySizeLimitMiddleware(cfg.Server.MaxBodySize))
@@ -33,15 +33,10 @@ func ApplyMiddleware(router *gin.Engine, cfg *config.Config) {
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get or generate request ID
-		requestID := c.GetHeader("X-Request-ID")
-		if requestID == "" {
-			requestID = generateRequestID()
-			c.Request.Header.Set("X-Request-ID", requestID)
+		requestID, exists := c.Get("requestID")
+		if !exists {
+			c.AbortWithStatus(http.StatusInternalServerError)
 		}
-
-		// Set requestID in the response header
-		c.Writer.Header().Set("X-Request-ID", requestID)
-		c.Set("requestID", requestID)
 
 		// Create a request-scoped logger with the request ID
 		reqLogger := logger.GetLogger("http").With("request_id", requestID)
@@ -50,12 +45,12 @@ func LoggerMiddleware() gin.HandlerFunc {
 		c.Request = c.Request.WithContext(reqLogger.WithContext(c.Request.Context()))
 
 		// Log the incoming request
-		reqLogger.Info("Request started", map[string]interface{}{
-			"method": c.Request.Method,
-			"path":   c.Request.URL.Path,
-			"query":  c.Request.URL.RawQuery,
-			"ip":     c.ClientIP(),
-		})
+		reqLogger.Info("Request started",
+			"path", c.Request.URL.Path,
+			"method", c.Request.Method,
+			"query", c.Request.URL.RawQuery,
+			"ip", c.ClientIP(),
+		)
 
 		// Start timer
 		start := time.Now()
@@ -70,21 +65,21 @@ func LoggerMiddleware() gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		// Log the completed request
-		logFields := map[string]interface{}{
-			"status":  statusCode,
-			"latency": latency,
-			"size":    c.Writer.Size(),
-			"method":  c.Request.Method,
-			"path":    c.Request.URL.Path,
+		logArgs := []interface{}{
+			"status", statusCode,
+			"path", c.Request.URL.Path,
+			"method", c.Request.Method,
+			"latency", latency,
+			"size", c.Writer.Size(),
 		}
 
 		// Determine log level based on status code
 		if statusCode >= 500 {
-			reqLogger.Error(c.Errors.Last(), "Request failed", logFields)
+			reqLogger.Error(c.Errors.Last(), "Request failed", logArgs...)
 		} else if statusCode >= 400 {
-			reqLogger.Warn("Request completed with client error", logFields)
+			reqLogger.Warn("Request completed with client error", logArgs...)
 		} else {
-			reqLogger.Info("Request completed successfully", logFields)
+			reqLogger.Info("Request completed successfully", logArgs...)
 		}
 	}
 }
