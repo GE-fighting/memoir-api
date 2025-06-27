@@ -16,6 +16,7 @@ type Factory interface {
 	PersonalMedia() PersonalMediaService
 	CoupleAlbum() CoupleAlbumService
 	Dashboard() DashboardService
+	Attachment() AttachmentService
 }
 
 // factory 服务工厂实现
@@ -30,6 +31,7 @@ type factory struct {
 	personalMediaService PersonalMediaService
 	coupleAlbumService   CoupleAlbumService
 	dashboardService     DashboardService
+	attachmentService    AttachmentService
 }
 
 // NewFactory 创建服务工厂
@@ -43,10 +45,15 @@ func NewFactory(repoFactory repository.Factory) Factory {
 	locationService := NewLocationService(repoFactory.Location())
 	timelineEventService := NewTimelineEventService(repoFactory.TimelineEvent(), repoFactory.Location(), repoFactory.PhotoVideo(), repoFactory.TimelineEventLocation(), repoFactory.TimelineEventPhotoVideo())
 	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo(), repoFactory.User(), repoFactory.CoupleAlbum())
-	wishlistService := NewWishlistService(repoFactory.Wishlist())
+	wishlistService := NewWishlistService(
+		repoFactory.Wishlist(),
+		repoFactory.WishlistAttachment(),
+		repoFactory.Attachment(),
+	)
 	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())
 	coupleAlbumService := NewCoupleAlbumService(repoFactory.CoupleAlbum(), userService, photoVideoService)
 	dashboardService := NewDashboardService(userService, coupleAlbumService, coupleService, photoVideoService, timelineEventService, locationService)
+	attachmentService := NewAttachmentService(repoFactory.Attachment(), repoFactory.User(), repoFactory.Couple())
 
 	return &factory{
 		userService:          userService,
@@ -59,6 +66,7 @@ func NewFactory(repoFactory repository.Factory) Factory {
 		personalMediaService: personalMediaService,
 		coupleAlbumService:   coupleAlbumService,
 		dashboardService:     dashboardService,
+		attachmentService:    attachmentService,
 	}
 }
 
@@ -109,3 +117,8 @@ func (f *factory) CoupleAlbum() CoupleAlbumService {
 
 // Dashboard 获取仪表盘服务
 func (f *factory) Dashboard() DashboardService { return f.dashboardService }
+
+// Attachment 获取附件服务
+func (f *factory) Attachment() AttachmentService {
+	return f.attachmentService
+}

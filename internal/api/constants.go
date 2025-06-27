@@ -19,4 +19,8 @@ const (
 	// 心愿清单状态
 	StatusPending   = "pending"
 	StatusCompleted = "completed"
+
+	// 附件所属空间
+	ATTACHMENT_PERSONAL = "personal"
+	ATTACHMENT_COUPLE   = "couple"
 )

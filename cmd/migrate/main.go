@@ -93,6 +93,8 @@ func migrateUp(db *gorm.DB) error {
 		&models.CoupleAlbum{},
 		&models.TimelineEventPhotoVideo{},
 		&models.TimelineEventLocation{},
+		&models.Attachment{},
+		&models.WishlistAttachment{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate tables: %w", err)
 	}
@@ -107,6 +109,7 @@ func migrateDown(db *gorm.DB) error {
 
 	// 按依赖关系逆序删除表
 	tables := []interface{}{
+		&models.WishlistAttachment{},
 		&models.CoupleAlbum{},
 		&models.PersonalMedia{},
 		&models.Wishlist{},
@@ -115,6 +118,7 @@ func migrateDown(db *gorm.DB) error {
 		&models.Location{},
 		&models.User{},
 		&models.Couple{},
+		&models.Attachment{},
 	}
 
 	for _, table := range tables {

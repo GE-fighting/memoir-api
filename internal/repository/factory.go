@@ -16,6 +16,8 @@ type Factory interface {
 	CoupleAlbum() CoupleAlbumRepository
 	TimelineEventLocation() TimelineEventLocationRepository
 	TimelineEventPhotoVideo() TimelineEventPhotoVideoRepository
+	Attachment() AttachmentRepository
+	WishlistAttachment() WishlistAttachmentRepository
 	GetDB() *gorm.DB
 }
 
@@ -32,6 +34,8 @@ type factory struct {
 	coupleAlbumRepository             CoupleAlbumRepository
 	timelineEventLocationRepository   TimelineEventLocationRepository
 	timelineEventPhotoVideoRepository TimelineEventPhotoVideoRepository
+	attachmentRepository              AttachmentRepository
+	wishlistAttachmentRepository      WishlistAttachmentRepository
 }
 
 func (f *factory) TimelineEventLocation() TimelineEventLocationRepository {
@@ -56,6 +60,8 @@ func NewFactory(db *gorm.DB) Factory {
 		coupleAlbumRepository:             NewCoupleAlbumRepository(db),
 		timelineEventLocationRepository:   NewTimelineEventLocationRepository(db),
 		timelineEventPhotoVideoRepository: NewTimelineEventPhotoVideoRepository(db),
+		attachmentRepository:              NewAttachmentRepository(db),
+		wishlistAttachmentRepository:      NewWishlistAttachmentRepository(db),
 	}
 }
 
@@ -97,6 +103,16 @@ func (f *factory) PersonalMedia() PersonalMediaRepository {
 // CoupleAlbum 获取情侣相册仓库
 func (f *factory) CoupleAlbum() CoupleAlbumRepository {
 	return f.coupleAlbumRepository
+}
+
+// Attachment 获取附件仓库
+func (f *factory) Attachment() AttachmentRepository {
+	return f.attachmentRepository
+}
+
+// WishlistAttachment 获取心愿附件关联仓库
+func (f *factory) WishlistAttachment() WishlistAttachmentRepository {
+	return f.wishlistAttachmentRepository
 }
 
 // GetDB 获取数据库连接

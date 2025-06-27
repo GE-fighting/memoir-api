@@ -116,6 +116,15 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		albumRoutes.GET("/all-media/page", handlers.PageCoupleMedia(services))
 	}
 
+	// 附件路由
+	attachmentRoutes := protected.Group("/attachments")
+	{
+		attachmentRoutes.POST("/create", handlers.CreateAttachmentHandler(services))
+		attachmentRoutes.GET("/:id", handlers.GetAttachmentHandler(services))
+		attachmentRoutes.GET("/list", handlers.ListAttachmentsHandler(services))
+		attachmentRoutes.DELETE("/:id", handlers.DeleteAttachmentHandler(services))
+	}
+
 	// OSS (Aliyun Object Storage Service) routes
 	ossRoutes := protected.Group("/oss")
 	{

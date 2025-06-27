@@ -16,5 +16,12 @@ type Wishlist struct {
 	ReminderDate *time.Time `json:"reminder_date,omitempty" gorm:"type:date"`
 
 	// 关联 - 没有外键约束
-	Couple Couple `json:"-" gorm:"-"`
+	Couple      Couple       `json:"-" gorm:"-"`
+	Attachments []Attachment `json:"attachments" gorm:"-"`
+}
+
+type WishlistAttachment struct {
+	Base
+	WishlistID   int64 `json:"wishlist_id,string" gorm:"not null"`
+	AttachmentID int64 `json:"attachment_id,string" gorm:"not null"`
 }

@@ -27,19 +27,32 @@ type WishlistService interface {
 	UpdateWishlistStatus(ctx context.Context, id int64, status string) error
 	DeleteWishlist(ctx context.Context, id int64) error
 	UpdateWishlistByRequest(ctx context.Context, req *dto.UpdateWishlistRequest) (*models.Wishlist, error)
+
+	// 附件关联管理
+	AssociateAttachments(ctx context.Context, wishlistID int64, attachmentIDs []int64) error
+	RemoveAttachment(ctx context.Context, wishlistID int64, attachmentID int64) error
+	GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error)
 }
 
 // wishlistService 心愿清单服务实现
 type wishlistService struct {
 	*BaseService
-	wishlistRepo repository.WishlistRepository
+	wishlistRepo           repository.WishlistRepository
+	wishlistAttachmentRepo repository.WishlistAttachmentRepository
+	attachmentRepo         repository.AttachmentRepository
 }
 
 // NewWishlistService 创建心愿清单服务
-func NewWishlistService(wishlistRepo repository.WishlistRepository) WishlistService {
+func NewWishlistService(
+	wishlistRepo repository.WishlistRepository,
+	wishlistAttachmentRepo repository.WishlistAttachmentRepository,
+	attachmentRepo repository.AttachmentRepository,
+) WishlistService {
 	return &wishlistService{
-		BaseService:  NewBaseService(wishlistRepo),
-		wishlistRepo: wishlistRepo,
+		BaseService:            NewBaseService(wishlistRepo),
+		wishlistRepo:           wishlistRepo,
+		wishlistAttachmentRepo: wishlistAttachmentRepo,
+		attachmentRepo:         attachmentRepo,
 	}
 }
 
@@ -52,6 +65,14 @@ func (s *wishlistService) CreateWishlist(ctx context.Context, wishlistDTO *dto.C
 	if err := s.wishlistRepo.Create(ctx, wishlist); err != nil {
 		return nil, fmt.Errorf("创建心愿失败: %w", err)
 	}
+
+	// 处理附件关联
+	if wishlistDTO.AttachmentIDs != nil && len(wishlistDTO.AttachmentIDs) > 0 {
+		if err := s.AssociateAttachments(ctx, wishlist.ID, wishlistDTO.AttachmentIDs); err != nil {
+			return nil, fmt.Errorf("关联附件失败: %w", err)
+		}
+	}
+
 	return wishlist, nil
 }
 
@@ -64,6 +85,14 @@ func (s *wishlistService) GetWishlistByID(ctx context.Context, id int64) (*model
 		}
 		return nil, fmt.Errorf("获取心愿失败: %w", err)
 	}
+
+	// 加载附件
+	attachments, err := s.GetAttachments(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("加载附件失败: %w", err)
+	}
+	wishlist.Attachments = attachments
+
 	return wishlist, nil
 }
 
@@ -73,7 +102,21 @@ func (s *wishlistService) ListWishlistsByCoupleID(ctx context.Context, coupleID 
 	if err != nil {
 		return nil, err
 	}
-	return dto.WishlistsFromModels(entities), nil
+
+	// 为每个心愿加载附件
+	result := make([]dto.WishlistDTO, len(entities))
+	for i, entity := range entities {
+		// 加载附件
+		attachments, err := s.GetAttachments(ctx, entity.ID)
+		if err == nil && len(attachments) > 0 {
+			entity.Attachments = attachments
+		}
+
+		// 转换为DTO
+		result[i] = dto.WishlistFromModel(entity)
+	}
+
+	return result, nil
 }
 
 // ListWishlistsByStatus 按状态获取心愿
@@ -127,6 +170,13 @@ func (s *wishlistService) UpdateWishlistByRequest(ctx context.Context, req *dto.
 		return nil, err // UpdateWishlist 已经处理了错误包装
 	}
 
+	// 处理附件关联
+	if req.AttachmentIDs != nil {
+		if err := s.AssociateAttachments(ctx, existingWishlist.ID, req.AttachmentIDs); err != nil {
+			return nil, fmt.Errorf("关联附件失败: %w", err)
+		}
+	}
+
 	return existingWishlist, nil
 }
 
@@ -164,4 +214,96 @@ func (s *wishlistService) DeleteWishlist(ctx context.Context, id int64) error {
 		return fmt.Errorf("删除心愿失败: %w", err)
 	}
 	return nil
+}
+
+// AssociateAttachments 将附件关联到心愿清单
+func (s *wishlistService) AssociateAttachments(ctx context.Context, wishlistID int64, attachmentIDs []int64) error {
+	// 首先验证心愿是否存在
+	_, err := s.GetWishlistByID(ctx, wishlistID)
+	if err != nil {
+		return err // GetWishlistByID 已经包装了错误
+	}
+
+	// 删除现有关联
+	if err := s.wishlistAttachmentRepo.DeleteByWishlistID(ctx, wishlistID); err != nil {
+		return fmt.Errorf("删除现有附件关联失败: %w", err)
+	}
+
+	// 创建新的关联
+	for _, attachmentID := range attachmentIDs {
+		// 验证附件是否存在
+		_, err := s.attachmentRepo.GetByID(ctx, attachmentID)
+		if err != nil {
+			return fmt.Errorf("附件 %d 不存在: %w", attachmentID, err)
+		}
+
+		// 创建关联
+		wishlistAttachment := &models.WishlistAttachment{
+			WishlistID:   wishlistID,
+			AttachmentID: attachmentID,
+		}
+		if err := s.wishlistAttachmentRepo.Create(ctx, wishlistAttachment); err != nil {
+			return fmt.Errorf("创建附件关联失败: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveAttachment 从心愿清单中移除单个附件
+func (s *wishlistService) RemoveAttachment(ctx context.Context, wishlistID int64, attachmentID int64) error {
+	// 首先验证心愿是否存在
+	_, err := s.GetWishlistByID(ctx, wishlistID)
+	if err != nil {
+		return err // GetWishlistByID 已经包装了错误
+	}
+
+	// 删除关联
+	if err := s.wishlistAttachmentRepo.DeleteByWishlistAndAttachmentID(ctx, wishlistID, attachmentID); err != nil {
+		return fmt.Errorf("删除附件关联失败: %w", err)
+	}
+
+	return nil
+}
+
+// GetAttachments 获取心愿清单关联的所有附件
+func (s *wishlistService) GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error) {
+	// 首先验证心愿是否存在
+	_, err := s.GetWishlistByID(ctx, wishlistID)
+	if err != nil {
+		return nil, err // GetWishlistByID 已经包装了错误
+	}
+
+	// 获取关联
+	wishlistAttachments, err := s.wishlistAttachmentRepo.FindByWishlistID(ctx, wishlistID)
+	if err != nil {
+		return nil, fmt.Errorf("获取附件关联失败: %w", err)
+	}
+
+	// 如果没有关联的附件，返回空数组
+	if len(wishlistAttachments) == 0 {
+		return []models.Attachment{}, nil
+	}
+
+	// 收集附件ID
+	var attachmentIDs []int64
+	for _, wa := range wishlistAttachments {
+		attachmentIDs = append(attachmentIDs, wa.AttachmentID)
+	}
+
+	// 查询附件详情
+	var attachments []models.Attachment
+	for _, attachmentID := range attachmentIDs {
+		attachment, err := s.attachmentRepo.GetByID(ctx, attachmentID)
+		if err != nil {
+			if errors.Is(err, repository.ErrAttachmentNotFound) {
+				// 如果附件不存在，跳过
+				continue
+			}
+			return nil, fmt.Errorf("获取附件详情失败: %w", err)
+		}
+		attachments = append(attachments, *attachment)
+	}
+
+	return attachments, nil
 }
