@@ -80,6 +80,7 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		eventRoutes.GET("/page", handlers.PageTimelineEventsHandler(services))
 		eventRoutes.GET("/:id", handlers.GetTimelineEventHandler(services))
 		eventRoutes.DELETE("/:id", handlers.DeleteTimelineEventHandler(services))
+		eventRoutes.PUT("/:id", handlers.UpdateTimelineEventHandler(services))
 	}
 
 	// Location routes

@@ -19,10 +19,12 @@ type CreateTimelineEventRequest struct {
 
 // UpdateTimelineEventRequest 更新时间线事件的请求
 type UpdateTimelineEventRequest struct {
+	EventId       int64      `json:"event_id,string" binding:"required"`
 	Title         string     `json:"title,omitempty" binding:"omitempty,max=100"`
 	StartDate     string     `json:"start_date" binding:"required"` // 格式：2006-01-02
 	EndDate       string     `json:"end_date" binding:"required"`
 	Content       string     `json:"content,omitempty"`
+	CoverURL      string     `json:"cover_url,omitempty"`
 	LocationIDs   Int64Array `json:"location_ids,omitempty"`
 	PhotoVideoIDs Int64Array `json:"photo_video_ids,omitempty"`
 }
@@ -58,16 +60,35 @@ func (r *CreateTimelineEventRequest) ToModel() (*models.TimelineEvent, error) {
 // ApplyToModel 将更新请求应用到模型
 func (r *UpdateTimelineEventRequest) ApplyToModel(event *models.TimelineEvent) error {
 	if r.StartDate != "" {
-		eventDate, err := time.Parse("2006-01-02", r.StartDate)
+		// 尝试多种日期格式
+		var eventDate time.Time
+		var err error
+
+		// 先尝试简单的日期格式 YYYY-MM-DD
+		eventDate, err = time.Parse("2006-01-02", r.StartDate)
 		if err != nil {
-			return err
+			// 如果失败，尝试 ISO 8601 格式 YYYY-MM-DDT00:00:00Z
+			eventDate, err = time.Parse(time.RFC3339, r.StartDate)
+			if err != nil {
+				return err
+			}
 		}
 		event.StartDate = eventDate
 	}
+
 	if r.EndDate != "" {
-		eventDate, err := time.Parse("2006-01-02", r.EndDate)
+		// 尝试多种日期格式
+		var eventDate time.Time
+		var err error
+
+		// 先尝试简单的日期格式 YYYY-MM-DD
+		eventDate, err = time.Parse("2006-01-02", r.EndDate)
 		if err != nil {
-			return err
+			// 如果失败，尝试 ISO 8601 格式 YYYY-MM-DDT00:00:00Z
+			eventDate, err = time.Parse(time.RFC3339, r.EndDate)
+			if err != nil {
+				return err
+			}
 		}
 		event.EndDate = eventDate
 	}
@@ -80,6 +101,10 @@ func (r *UpdateTimelineEventRequest) ApplyToModel(event *models.TimelineEvent) e
 		event.Content = r.Content
 	}
 
+	if r.CoverURL != "" {
+		event.CoverURL = r.CoverURL
+	}
+	event.ID = r.EventId
 	return nil
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"memoir-api/internal/api/dto"
+	"memoir-api/internal/logger"
 	"memoir-api/internal/service"
 	"net/http"
 	"strconv"
@@ -61,8 +62,34 @@ func GetTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 // UpdateTimelineEventHandler updates a timeline event
 func UpdateTimelineEventHandler(services service.Factory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement update timeline event logic
-		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新时间线事件成功"))
+		var req dto.UpdateTimelineEventRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+
+		// 先获取现有事件
+		existingEvent, err := services.TimelineEvent().GetTimelineEventByID(c.Request.Context(), req.EventId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "获取时间线事件失败", err.Error()))
+			return
+		}
+
+		// 应用更新到已有事件上
+		err = req.ApplyToModel(existingEvent)
+		if err != nil {
+			log := logger.FromContext(c).WithComponent("event_handler")
+			log.Error(err, "应用更新错误")
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "应用更新数据失败", err.Error()))
+			return
+		}
+
+		_, err = services.TimelineEvent().UpdateTimelineEvent(c.Request.Context(), existingEvent, req.LocationIDs, req.PhotoVideoIDs)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "更新回忆失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新回忆成功"))
 	}
 }
 

@@ -80,7 +80,7 @@ func main() {
 		c := cron.New()
 
 		// 每天早上9点检查纪念日
-		_, err := c.AddFunc("0 9 * * *", func() {
+		_, err := c.AddFunc("15 16 * * *", func() {
 			logger.Info("执行纪念日检查任务")
 			err := serviceFactory.CoupleReminder().CheckAndSendAnniversaryReminders(context.Background())
 			if err != nil {
