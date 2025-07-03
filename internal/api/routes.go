@@ -27,12 +27,24 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	// Create Auth Handler
 	authHandler := handlers.NewAuthHandler(services)
 
+	// Create Email Handler
+	emailHandler := handlers.NewEmailHandler(services)
+
 	// Auth routes
 	authRoutes := v1.Group("/auth")
 	{
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/refresh", authHandler.RefreshToken)
+	}
+
+	// Email verification routes (public)
+	emailRoutes := v1.Group("/email")
+	{
+		emailRoutes.POST("/verify", emailHandler.VerifyEmail)
+		emailRoutes.POST("/resend-code", emailHandler.ResendVerificationCode)
+		emailRoutes.POST("/forgot-password", emailHandler.ForgotPassword)
+		emailRoutes.POST("/reset-password", emailHandler.ResetPassword)
 	}
 
 	// Protected routes
@@ -129,5 +141,14 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	ossRoutes := protected.Group("/oss")
 	{
 		ossRoutes.GET("/token", handlers.GenerateSTSToken)
+	}
+
+	// 管理员路由 - 用于手动触发提醒功能
+	adminRoutes := protected.Group("/reminders")
+	{
+		// 触发纪念日提醒
+		adminRoutes.POST("/anniversary", handlers.TriggerAnniversaryRemindersHandler(services))
+		// 触发节日提醒
+		adminRoutes.POST("/festival", handlers.TriggerFestivalRemindersHandler(services))
 	}
 }

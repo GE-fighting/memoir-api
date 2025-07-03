@@ -37,8 +37,9 @@ type CoupleAlbumDTO struct {
 
 type CoupleAlbumQueryParams struct {
 	PaginationRequest
-	CoupleID int64  `form:"couple_id,string"`
-	Title    string `form:"title"`
+	CoupleID  int64  `form:"couple_id,string"`
+	Title     string `form:"title"`
+	MediaType string `form:"media_type"`
 }
 
 // ToModel 将DTO转换为模型对象

@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"memoir-api/internal/models"
@@ -13,12 +15,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// 初始化随机数生成器
-var secureRand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
+// 错误常量定义
 var (
-	ErrUserExists      = errors.New("用户已存在")
-	ErrInvalidPassword = errors.New("密码不正确")
+	ErrUserExists              = errors.New("用户已存在")
+	ErrInvalidPassword         = errors.New("密码不正确")
+	ErrVerificationRequired    = errors.New("需要验证邮箱")
+	ErrInvalidVerificationCode = errors.New("验证码无效")
+	ErrInvalidResetToken       = errors.New("重置令牌无效")
+	ErrEmailNotFound           = errors.New("邮箱不存在")
 )
 
 // UserService 用户服务接口
@@ -34,6 +38,11 @@ type UserService interface {
 	DeleteUser(ctx context.Context, id int64) error
 	ExistCouple(ctx context.Context) (bool, error)
 	GetCoupleID(ctx context.Context, userID int64) (int64, error)
+	VerifyEmail(ctx context.Context, email, code string) error
+	ForgotPassword(ctx context.Context, email string) (string, error)
+	ResetPassword(ctx context.Context, email, token, newPassword string) error
+	GenerateVerificationCode() string
+	ResendVerificationCode(ctx context.Context, email string) (string, error)
 }
 
 // userService 用户服务实现
@@ -41,14 +50,16 @@ type userService struct {
 	*BaseService
 	userRepo   repository.UserRepository
 	coupleRepo repository.CoupleRepository
+	emailSvc   EmailService // 邮件服务依赖
 }
 
 // NewUserService 创建用户服务
-func NewUserService(userRepo repository.UserRepository, coupleRepo repository.CoupleRepository) UserService {
+func NewUserService(userRepo repository.UserRepository, coupleRepo repository.CoupleRepository, emailSvc EmailService) UserService {
 	return &userService{
 		BaseService: NewBaseService(userRepo),
 		userRepo:    userRepo,
 		coupleRepo:  coupleRepo,
+		emailSvc:    emailSvc,
 	}
 }
 
@@ -111,6 +122,14 @@ func (s *userService) Register(ctx context.Context, username, email, password, p
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("创建用户失败: %w", err)
+	}
+
+	// 生成并发送验证码
+	verificationCode := s.GenerateVerificationCode()
+	err = s.emailSvc.SendVerificationEmail(ctx, email, username, verificationCode)
+	if err != nil {
+		// 记录错误但不影响注册流程
+		fmt.Printf("发送验证邮件失败: %v", err)
 	}
 
 	return user, nil
@@ -203,7 +222,12 @@ func GeneratePairToken() string {
 
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[secureRand.Intn(len(charset))]
+		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			// 如果随机数生成失败，使用时间戳作为备选
+			return time.Now().String()
+		}
+		b[i] = charset[randomIndex.Int64()]
 	}
 	return string(b)
 }
@@ -233,4 +257,142 @@ func (s *userService) GetCoupleID(ctx context.Context, userID int64) (int64, err
 		return 0, err
 	}
 	return couple.ID, nil
+}
+
+// VerifyEmail 验证用户邮箱
+func (s *userService) VerifyEmail(ctx context.Context, email, code string) error {
+	// 检查用户是否存在
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return ErrEmailNotFound
+		}
+		return fmt.Errorf("查询用户时发生错误: %w", err)
+	}
+
+	// 验证验证码
+	verified, err := s.emailSvc.VerifyCode(ctx, email, code)
+	if err != nil {
+		return fmt.Errorf("验证验证码时发生错误: %w", err)
+	}
+
+	if !verified {
+		return ErrInvalidVerificationCode
+	}
+
+	// 验证成功后发送欢迎邮件
+	err = s.emailSvc.SendWelcomeEmail(ctx, email, user.Username)
+	if err != nil {
+		// 记录错误但不影响验证流程
+		fmt.Printf("发送欢迎邮件失败: %v", err)
+	}
+
+	return nil
+}
+
+// ForgotPassword 处理忘记密码请求
+func (s *userService) ForgotPassword(ctx context.Context, email string) (string, error) {
+	// 检查用户是否存在
+	_, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return "", ErrEmailNotFound
+		}
+		return "", fmt.Errorf("查询用户时发生错误: %w", err)
+	}
+
+	// 生成重置令牌
+	resetToken := generateResetToken()
+
+	// 发送密码重置邮件
+	err = s.emailSvc.SendPasswordResetEmail(ctx, email, resetToken)
+	if err != nil {
+		return "", fmt.Errorf("发送密码重置邮件失败: %w", err)
+	}
+
+	return resetToken, nil
+}
+
+// ResetPassword 重置密码
+func (s *userService) ResetPassword(ctx context.Context, email, token, newPassword string) error {
+	// 验证重置令牌
+	verified, err := s.emailSvc.VerifyPasswordResetToken(ctx, email, token)
+	if err != nil {
+		return fmt.Errorf("验证重置令牌时发生错误: %w", err)
+	}
+
+	if !verified {
+		return ErrInvalidResetToken
+	}
+
+	// 获取用户
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return ErrEmailNotFound
+		}
+		return fmt.Errorf("查询用户时发生错误: %w", err)
+	}
+
+	// 对新密码进行哈希
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("密码哈希失败: %w", err)
+	}
+
+	// 更新密码
+	user.PasswordHash = string(hashedPassword)
+	return s.userRepo.Update(ctx, user)
+}
+
+// GenerateVerificationCode 生成6位验证码
+func (s *userService) GenerateVerificationCode() string {
+	const codeLength = 6
+	const charset = "0123456789"
+
+	b := make([]byte, codeLength)
+	for i := range b {
+		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			// 如果随机数生成失败，使用时间戳作为备选
+			n := time.Now().UnixNano() % int64(len(charset))
+			b[i] = charset[n]
+			continue
+		}
+		b[i] = charset[randomIndex.Int64()]
+	}
+	return string(b)
+}
+
+// ResendVerificationCode 重发验证码
+func (s *userService) ResendVerificationCode(ctx context.Context, email string) (string, error) {
+	// 检查用户是否存在
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotFound) {
+			return "", ErrEmailNotFound
+		}
+		return "", fmt.Errorf("查询用户时发生错误: %w", err)
+	}
+
+	// 生成新的验证码
+	verificationCode := s.GenerateVerificationCode()
+
+	// 发送验证码
+	err = s.emailSvc.SendVerificationEmail(ctx, email, user.Username, verificationCode)
+	if err != nil {
+		return "", fmt.Errorf("发送验证码失败: %w", err)
+	}
+
+	return verificationCode, nil
+}
+
+// generateResetToken 生成密码重置令牌
+func generateResetToken() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return time.Now().String()
+	}
+	return hex.EncodeToString(b)
 }

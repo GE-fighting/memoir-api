@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -63,6 +64,52 @@ func main() {
 	// Initialize services
 	serviceFactory := service.NewFactory(repoFactory)
 
+	// Create application context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start email queue processor if enabled
+	if cfg.Email.Enabled {
+		logger.Info("启动邮件队列处理")
+		go serviceFactory.Email().ProcessEmailQueue(ctx)
+	}
+
+	// 设置定时任务
+	if cfg.Email.Enabled {
+		logger.Info("设置纪念日和节日提醒定时任务")
+		c := cron.New()
+
+		// 每天早上9点检查纪念日
+		_, err := c.AddFunc("0 9 * * *", func() {
+			logger.Info("执行纪念日检查任务")
+			err := serviceFactory.CoupleReminder().CheckAndSendAnniversaryReminders(context.Background())
+			if err != nil {
+				logger.Error(err, "纪念日检查任务失败")
+			}
+		})
+		if err != nil {
+			logger.Error(err, "添加纪念日检查任务失败")
+		}
+
+		// 每天早上10点检查节日
+		_, err = c.AddFunc("0 10 * * *", func() {
+			logger.Info("执行节日检查任务")
+			err := serviceFactory.CoupleReminder().CheckAndSendFestivalReminders(context.Background())
+			if err != nil {
+				logger.Error(err, "节日检查任务失败")
+			}
+		})
+		if err != nil {
+			logger.Error(err, "添加节日检查任务失败")
+		}
+
+		// 启动定时任务
+		c.Start()
+
+		// 确保在程序退出时停止定时任务
+		defer c.Stop()
+	}
+
 	// Setup Gin router
 	router := gin.New()
 
@@ -93,7 +140,7 @@ func main() {
 	logger.Info("Shutting down server...")
 
 	// Create timeout context for shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Shutdown the server

@@ -1,6 +1,10 @@
 package service
 
 import (
+	"memoir-api/internal/cache"
+	"memoir-api/internal/config"
+	"memoir-api/internal/email"
+	"memoir-api/internal/logger"
 	"memoir-api/internal/repository"
 )
 
@@ -17,56 +21,126 @@ type Factory interface {
 	CoupleAlbum() CoupleAlbumService
 	Dashboard() DashboardService
 	Attachment() AttachmentService
+	Email() EmailService
+	CoupleReminder() CoupleReminderService
 }
 
 // factory 服务工厂实现
 type factory struct {
-	userService          UserService
-	coupleService        CoupleService
-	jwtService           JWTService
-	locationService      LocationService
-	timelineEventService TimelineEventService
-	photoVideoService    PhotoVideoService
-	wishlistService      WishlistService
-	personalMediaService PersonalMediaService
-	coupleAlbumService   CoupleAlbumService
-	dashboardService     DashboardService
-	attachmentService    AttachmentService
+	userService           UserService
+	coupleService         CoupleService
+	jwtService            JWTService
+	locationService       LocationService
+	timelineEventService  TimelineEventService
+	photoVideoService     PhotoVideoService
+	wishlistService       WishlistService
+	personalMediaService  PersonalMediaService
+	coupleAlbumService    CoupleAlbumService
+	dashboardService      DashboardService
+	attachmentService     AttachmentService
+	emailService          EmailService
+	coupleReminderService CoupleReminderService
 }
 
 // NewFactory 创建服务工厂
 func NewFactory(repoFactory repository.Factory) Factory {
+	// 创建服务实例
+	userRepo := repoFactory.User()
+	coupleRepo := repoFactory.Couple()
+
+	// 获取Redis客户端
+	redisClient := cache.GetRedisClient().Client
+
+	// 创建邮件服务
+	cfg := config.New()
+	emailService, err := email.NewEmailService(cfg, redisClient)
+	if err != nil {
+		logger.Fatal(err, "Failed to create email service")
+	}
+
+	// 创建用户服务
+	userService := NewUserService(userRepo, coupleRepo, emailService)
+
+	// 创建JWT服务
 	jwtService := NewJWTService()
-	userService := NewUserService(repoFactory.User(), repoFactory.Couple())
-	coupleService := NewCoupleService(
-		repoFactory.Couple(),
-		repoFactory.User(),
-	)
+
+	// 创建情侣服务
+	coupleService := NewCoupleService(coupleRepo, userRepo)
+
+	// 创建位置服务
 	locationService := NewLocationService(repoFactory.Location())
-	timelineEventService := NewTimelineEventService(repoFactory.TimelineEvent(), repoFactory.Location(), repoFactory.PhotoVideo(), repoFactory.TimelineEventLocation(), repoFactory.TimelineEventPhotoVideo())
-	photoVideoService := NewPhotoVideoService(repoFactory.PhotoVideo(), repoFactory.User(), repoFactory.CoupleAlbum())
+
+	// 创建时间线事件服务
+	timelineEventService := NewTimelineEventService(
+		repoFactory.TimelineEvent(),
+		repoFactory.Location(),
+		repoFactory.PhotoVideo(),
+		repoFactory.TimelineEventLocation(),
+		repoFactory.TimelineEventPhotoVideo(),
+	)
+
+	// 创建照片视频服务
+	photoVideoService := NewPhotoVideoService(
+		repoFactory.PhotoVideo(),
+		userRepo,
+		repoFactory.CoupleAlbum(),
+	)
+
+	// 创建心愿单服务
 	wishlistService := NewWishlistService(
 		repoFactory.Wishlist(),
 		repoFactory.WishlistAttachment(),
 		repoFactory.Attachment(),
 	)
+
+	// 创建个人媒体服务
 	personalMediaService := NewPersonalMediaService(repoFactory.PersonalMedia())
-	coupleAlbumService := NewCoupleAlbumService(repoFactory.CoupleAlbum(), userService, photoVideoService)
-	dashboardService := NewDashboardService(userService, coupleAlbumService, coupleService, photoVideoService, timelineEventService, locationService)
-	attachmentService := NewAttachmentService(repoFactory.Attachment(), repoFactory.User(), repoFactory.Couple())
+
+	// 创建情侣相册服务
+	coupleAlbumService := NewCoupleAlbumService(
+		repoFactory.CoupleAlbum(),
+		userService,
+		photoVideoService,
+	)
+
+	// 创建附件服务
+	attachmentService := NewAttachmentService(
+		repoFactory.Attachment(),
+		userRepo,
+		coupleRepo,
+	)
+
+	// 创建仪表盘服务
+	dashboardService := NewDashboardService(
+		userService,
+		coupleAlbumService,
+		coupleService,
+		photoVideoService,
+		timelineEventService,
+		locationService,
+	)
+
+	// 创建情侣纪念日提醒服务
+	coupleReminderService := NewCoupleReminderService(
+		coupleRepo,
+		userRepo,
+		emailService,
+	)
 
 	return &factory{
-		userService:          userService,
-		coupleService:        coupleService,
-		jwtService:           jwtService,
-		locationService:      locationService,
-		timelineEventService: timelineEventService,
-		photoVideoService:    photoVideoService,
-		wishlistService:      wishlistService,
-		personalMediaService: personalMediaService,
-		coupleAlbumService:   coupleAlbumService,
-		dashboardService:     dashboardService,
-		attachmentService:    attachmentService,
+		userService:           userService,
+		coupleService:         coupleService,
+		jwtService:            jwtService,
+		locationService:       locationService,
+		timelineEventService:  timelineEventService,
+		photoVideoService:     photoVideoService,
+		wishlistService:       wishlistService,
+		personalMediaService:  personalMediaService,
+		coupleAlbumService:    coupleAlbumService,
+		dashboardService:      dashboardService,
+		attachmentService:     attachmentService,
+		emailService:          emailService,
+		coupleReminderService: coupleReminderService,
 	}
 }
 
@@ -121,4 +195,12 @@ func (f *factory) Dashboard() DashboardService { return f.dashboardService }
 // Attachment 获取附件服务
 func (f *factory) Attachment() AttachmentService {
 	return f.attachmentService
+}
+
+func (f *factory) Email() EmailService {
+	return f.emailService
+}
+
+func (f *factory) CoupleReminder() CoupleReminderService {
+	return f.coupleReminderService
 }

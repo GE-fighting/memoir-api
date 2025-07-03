@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"memoir-api/internal/models"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -16,7 +17,7 @@ type CoupleAlbumRepository interface {
 	Delete(ctx context.Context, id int64) error
 	GetWithPhotos(ctx context.Context, id int64) (*models.CoupleAlbum, error)
 	CountByCoupleID(ctx context.Context, coupleID int64) (int64, error)
-	PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int) ([]*models.PhotoVideo, int64, error)
+	PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int, mediaType string) ([]*models.PhotoVideo, int64, error)
 }
 
 type coupleAlbumRepository struct {
@@ -82,17 +83,24 @@ func (r *coupleAlbumRepository) GetWithPhotos(ctx context.Context, id int64) (*m
 	return &album, nil
 }
 
-func (r *coupleAlbumRepository) PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int) ([]*models.PhotoVideo, int64, error) {
+func (r *coupleAlbumRepository) PageCoupleMedia(ctx context.Context, coupleID int64, limit, offset int, mediaType string) ([]*models.PhotoVideo, int64, error) {
 	var photos []*models.PhotoVideo
 	var total int64
 
 	// 获取总数
-	if err := r.DB().WithContext(ctx).Model(&models.PhotoVideo{}).Where("couple_id = ?", coupleID).Count(&total).Error; err != nil {
+	queryTotal := r.DB().WithContext(ctx).Model(&models.PhotoVideo{}).Where("couple_id = ?", coupleID)
+	if strings.TrimSpace(mediaType) != "" {
+		queryTotal = queryTotal.Where("media_type = ?", mediaType)
+	}
+	if err := queryTotal.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// 获取列表
 	query := r.DB().WithContext(ctx).Where("couple_id = ?", coupleID).Order("created_at DESC")
+	if strings.TrimSpace(mediaType) != "" {
+		query = query.Where("media_type = ?", mediaType)
+	}
 	if offset >= 0 && limit > 0 {
 		query = query.Offset(offset).Limit(limit)
 	}

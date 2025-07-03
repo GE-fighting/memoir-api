@@ -16,6 +16,7 @@ type Config struct {
 	DB     DBConfig
 	Redis  RedisConfig
 	Server ServerConfig
+	Email  EmailConfig // 新增邮件配置
 }
 
 // DBConfig 存储数据库配置
@@ -38,6 +39,20 @@ type RedisConfig struct {
 	Port     string
 	Password string
 	DB       int
+}
+
+// EmailConfig 存储邮件服务配置
+type EmailConfig struct {
+	Enabled         bool   // 是否启用邮件功能
+	AccessKeyID     string // 阿里云AccessKeyID
+	AccessKeySecret string // 阿里云AccessKeySecret
+	RegionID        string // 阿里云区域ID
+	AccountName     string // 发信地址
+	FromAlias       string // 发信人名称
+	ReplyToAddress  bool   // 是否使用回信地址
+	AddressType     int    // 地址类型，0为随机账号，1为发信地址
+	AppName         string // 应用名称，用于邮件模板
+	AppURL          string // 应用URL，用于生成链接
 }
 
 // ServerConfig 服务配置
@@ -128,6 +143,12 @@ func New() *Config {
 		corsOrigins = append(corsOrigins, strings.Split(originsStr, ",")...)
 	}
 
+	// 解析邮件服务是否启用
+	emailEnabled := false
+	if enabledStr := getEnv("EMAIL_ENABLED", "false"); enabledStr == "true" {
+		emailEnabled = true
+	}
+
 	return &Config{
 		DB: DBConfig{
 			Host:            getEnv("DB_HOST", "localhost"),
@@ -146,6 +167,18 @@ func New() *Config {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       redisDB,
+		},
+		Email: EmailConfig{
+			Enabled:         emailEnabled,
+			AccessKeyID:     getEnv("EMAIL_ACCESS_KEY_ID", ""),
+			AccessKeySecret: getEnv("EMAIL_ACCESS_KEY_SECRET", ""),
+			RegionID:        getEnv("EMAIL_REGION_ID", "cn-hangzhou"),
+			AccountName:     getEnv("EMAIL_ACCOUNT_NAME", ""),
+			FromAlias:       getEnv("EMAIL_FROM_ALIAS", "Memoir App"),
+			ReplyToAddress:  getEnvBool("EMAIL_REPLY_TO_ADDRESS", "false"),
+			AddressType:     getEnvInt("EMAIL_ADDRESS_TYPE", "1"),
+			AppName:         getEnv("APP_NAME", "Memoir"),
+			AppURL:          getEnv("APP_URL", "http://localhost:3000"),
 		},
 		Server: ServerConfig{
 			Port:         getEnvInt("SERVER_PORT", "5000"),
@@ -185,6 +218,16 @@ func getEnvInt64(key, defaultValue string) int64 {
 	val, err := strconv.ParseInt(valStr, 10, 64)
 	if err != nil {
 		return 0 // 或者返回你想要的默认值，比如 10485760
+	}
+	return val
+}
+
+// getEnvBool 从环境变量获取布尔值
+func getEnvBool(key, defaultValue string) bool {
+	valStr := getEnv(key, defaultValue)
+	val, err := strconv.ParseBool(valStr)
+	if err != nil {
+		return false
 	}
 	return val
 }

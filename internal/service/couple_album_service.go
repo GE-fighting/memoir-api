@@ -150,5 +150,5 @@ func (s *coupleAlbumService) GetWithPhotos(ctx context.Context, id int64) (*mode
 
 // 分页查询couple的媒体列表
 func (s *coupleAlbumService) PageCoupleMedia(ctx context.Context, param *dto.CoupleAlbumQueryParams) ([]*models.PhotoVideo, int64, error) {
-	return s.coupleAlbumRepo.PageCoupleMedia(ctx, param.CoupleID, param.Limit(), param.Offset())
+	return s.coupleAlbumRepo.PageCoupleMedia(ctx, param.CoupleID, param.Limit(), param.Offset(), param.MediaType)
 }
