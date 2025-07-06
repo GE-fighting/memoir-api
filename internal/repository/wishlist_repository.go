@@ -26,6 +26,7 @@ type WishlistRepository interface {
 	Update(ctx context.Context, wishlist *models.Wishlist) error
 	UpdateStatus(ctx context.Context, id int64, status string) error
 	Delete(ctx context.Context, id int64) error
+	GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error)
 }
 
 // wishlistRepository 心愿清单仓库实现
@@ -157,4 +158,17 @@ func (r *wishlistRepository) Delete(ctx context.Context, id int64) error {
 		return ErrWishlistNotFound
 	}
 	return nil
+}
+
+// GetAttachments 获取心愿的所有附件
+func (r *wishlistRepository) GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error) {
+	var attachments []models.Attachment
+	err := r.DB().WithContext(ctx).
+		Joins("JOIN wishlist_attachments ON wishlist_attachments.attachment_id = attachments.i ").
+		Where("wishlist_attachments.wishlist_id = ?", wishlistID).
+		Find(&attachments).Error
+	if err != nil {
+		return nil, err
+	}
+	return attachments, nil
 }

@@ -268,42 +268,5 @@ func (s *wishlistService) RemoveAttachment(ctx context.Context, wishlistID int64
 
 // GetAttachments 获取心愿清单关联的所有附件
 func (s *wishlistService) GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error) {
-	// 首先验证心愿是否存在
-	_, err := s.GetWishlistByID(ctx, wishlistID)
-	if err != nil {
-		return nil, err // GetWishlistByID 已经包装了错误
-	}
-
-	// 获取关联
-	wishlistAttachments, err := s.wishlistAttachmentRepo.FindByWishlistID(ctx, wishlistID)
-	if err != nil {
-		return nil, fmt.Errorf("获取附件关联失败: %w", err)
-	}
-
-	// 如果没有关联的附件，返回空数组
-	if len(wishlistAttachments) == 0 {
-		return []models.Attachment{}, nil
-	}
-
-	// 收集附件ID
-	var attachmentIDs []int64
-	for _, wa := range wishlistAttachments {
-		attachmentIDs = append(attachmentIDs, wa.AttachmentID)
-	}
-
-	// 查询附件详情
-	var attachments []models.Attachment
-	for _, attachmentID := range attachmentIDs {
-		attachment, err := s.attachmentRepo.GetByID(ctx, attachmentID)
-		if err != nil {
-			if errors.Is(err, repository.ErrAttachmentNotFound) {
-				// 如果附件不存在，跳过
-				continue
-			}
-			return nil, fmt.Errorf("获取附件详情失败: %w", err)
-		}
-		attachments = append(attachments, *attachment)
-	}
-
-	return attachments, nil
+	return s.wishlistRepo.GetAttachments(ctx, wishlistID)
 }
