@@ -164,7 +164,7 @@ func (r *wishlistRepository) Delete(ctx context.Context, id int64) error {
 func (r *wishlistRepository) GetAttachments(ctx context.Context, wishlistID int64) ([]models.Attachment, error) {
 	var attachments []models.Attachment
 	err := r.DB().WithContext(ctx).
-		Joins("JOIN wishlist_attachments ON wishlist_attachments.attachment_id = attachments.i ").
+		Joins("JOIN wishlist_attachments ON wishlist_attachments.attachment_id = attachments.id ").
 		Where("wishlist_attachments.wishlist_id = ?", wishlistID).
 		Find(&attachments).Error
 	if err != nil {

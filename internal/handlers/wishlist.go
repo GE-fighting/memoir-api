@@ -133,3 +133,24 @@ func DeleteWishlistItemHandler(services service.Factory) gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.EmptySuccessResponse("心愿已成功删除"))
 	}
 }
+
+// 心愿关联附件
+func AssociateAttachments(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.AssociateAttachmentsRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "请求参数无效", err.Error()))
+			return
+		}
+		err := services.Wishlist().AssociateAttachments(c.Request.Context(), req.WishlistID, req.AttachmentIDs)
+		if err != nil {
+			if err == service.ErrWishlistNotFound {
+				c.JSON(http.StatusNotFound, dto.NewErrorResponse(http.StatusNotFound, "心愿不存在", err.Error()))
+			} else {
+				c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "心愿关联附件失败", err.Error()))
+			}
+			return
+		}
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("附件关联成功"))
+	}
+}

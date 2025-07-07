@@ -32,6 +32,11 @@ type UpdateWishlistStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=pending completed"`
 }
 
+type AssociateAttachmentsRequest struct {
+	AttachmentIDs Int64Array `json:"attachment_ids,omitempty" binding:"required"`
+	WishlistID    int64      `json:"wishlist_id,string" binding:"required"`
+}
+
 // WishlistDTO 心愿清单响应DTO
 type WishlistDTO struct {
 	ID           int64                `json:"id,string"`
