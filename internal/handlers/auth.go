@@ -3,17 +3,18 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"memoir-api/internal/api/dto"
+	"memoir-api/internal/logger"
 	"memoir-api/internal/models"
 	"memoir-api/internal/service"
-
-	"github.com/gin-gonic/gin"
 )
 
 // AuthHandler 认证处理程序
 type AuthHandler struct {
 	userService service.UserService
 	jwtService  service.JWTService
+	emailSvc    service.EmailService
 }
 
 // NewAuthHandler 创建认证处理程序
@@ -21,6 +22,7 @@ func NewAuthHandler(services service.Factory) *AuthHandler {
 	return &AuthHandler{
 		userService: services.User(),
 		jwtService:  services.JWT(),
+		emailSvc:    services.Email(),
 	}
 }
 
@@ -47,6 +49,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "生成令牌失败", err.Error()))
 		return
+	}
+
+	// 验证成功后发送欢迎邮件
+	err = h.emailSvc.SendWelcomeEmail(c, req.Email, user.Username)
+	if err != nil {
+		// 记录错误但不影响验证流程
+		logger.GetLogger("auth").Error(err, "发送欢迎邮件错误")
 	}
 
 	c.JSON(http.StatusCreated, dto.NewSuccessResponse(tokenResp))

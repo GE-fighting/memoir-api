@@ -262,7 +262,7 @@ func (s *userService) GetCoupleID(ctx context.Context, userID int64) (int64, err
 // VerifyEmail 验证用户邮箱
 func (s *userService) VerifyEmail(ctx context.Context, email, code string) error {
 	// 检查用户是否存在
-	user, err := s.userRepo.GetByEmail(ctx, email)
+	_, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) {
 			return ErrEmailNotFound
@@ -278,13 +278,6 @@ func (s *userService) VerifyEmail(ctx context.Context, email, code string) error
 
 	if !verified {
 		return ErrInvalidVerificationCode
-	}
-
-	// 验证成功后发送欢迎邮件
-	err = s.emailSvc.SendWelcomeEmail(ctx, email, user.Username)
-	if err != nil {
-		// 记录错误但不影响验证流程
-		fmt.Printf("发送欢迎邮件失败: %v", err)
 	}
 
 	return nil
