@@ -44,7 +44,6 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		emailRoutes.POST("/verify", emailHandler.VerifyEmail)
 		emailRoutes.POST("/resend-code", emailHandler.ResendVerificationCode)
 		emailRoutes.POST("/forgot-password", emailHandler.ForgotPassword)
-		emailRoutes.POST("/reset-password", emailHandler.ResetPassword)
 	}
 
 	// Protected routes
@@ -63,6 +62,8 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 	{
 		userRoutes.GET("/me", handlers.GetCurrentUserHandler(services))
 		userRoutes.GET("/exist-couple", handlers.ExistCoupleHandler(services))
+		userRoutes.PUT("/update", handlers.UpdateUserHandler(services))
+		userRoutes.PUT("/password", handlers.UpdatePassword(services))
 	}
 
 	// Couple routes

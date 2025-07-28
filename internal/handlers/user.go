@@ -51,3 +51,41 @@ func ExistCoupleHandler(services service.Factory) gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.NewSuccessResponse(exist))
 	}
 }
+
+func UpdateUserHandler(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetInt64("user_id")
+		var updateUserRequest dto.UpdateUserRequest
+		if c.ShouldBind(&updateUserRequest) != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "参数绑定失败", "请检查参数"))
+			return
+		}
+		updateUserRequest.UserID = userID
+		userService := services.User()
+		err := userService.UpdateUser(c.Request.Context(), &updateUserRequest)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "更新用户信息失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.NewSuccessResponse(updateUserRequest))
+	}
+}
+
+func UpdatePassword(services service.Factory) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId := c.GetInt64("user_id")
+		var updateDTO dto.UpdateUserPasswordDTO
+		if c.ShouldBindJSON(&updateDTO) != nil {
+			c.JSON(http.StatusBadRequest, dto.NewErrorResponse(http.StatusBadRequest, "参数绑定失败", "请检查参数"))
+			return
+
+		}
+		updateDTO.UserID = userId
+		err := services.User().UpdatePassword(c.Request.Context(), &updateDTO)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.NewErrorResponse(http.StatusInternalServerError, "更新密码失败", err.Error()))
+			return
+		}
+		c.JSON(http.StatusOK, dto.EmptySuccessResponse("更新成功"))
+	}
+}

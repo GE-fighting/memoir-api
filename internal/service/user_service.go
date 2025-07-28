@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"time"
 
+	"memoir-api/internal/api/dto"
 	"memoir-api/internal/models"
 	"memoir-api/internal/repository"
 
@@ -19,7 +20,6 @@ import (
 var (
 	ErrUserExists              = errors.New("用户已存在")
 	ErrInvalidPassword         = errors.New("密码不正确")
-	ErrVerificationRequired    = errors.New("需要验证邮箱")
 	ErrInvalidVerificationCode = errors.New("验证码无效")
 	ErrInvalidResetToken       = errors.New("重置令牌无效")
 	ErrEmailNotFound           = errors.New("邮箱不存在")
@@ -33,14 +33,13 @@ type UserService interface {
 	LoginByUsername(ctx context.Context, username, password string) (*models.User, error)
 	GetUserByID(ctx context.Context, id int64) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-	UpdateUser(ctx context.Context, user *models.User) error
-	UpdatePassword(ctx context.Context, userID int64, oldPassword, newPassword string) error
+	UpdateUser(ctx context.Context, updateUserRequest *dto.UpdateUserRequest) error
+	UpdatePassword(ctx context.Context, dto *dto.UpdateUserPasswordDTO) error
 	DeleteUser(ctx context.Context, id int64) error
 	ExistCouple(ctx context.Context) (bool, error)
 	GetCoupleID(ctx context.Context, userID int64) (int64, error)
 	VerifyEmail(ctx context.Context, email, code string) error
 	ForgotPassword(ctx context.Context, email string) (string, error)
-	ResetPassword(ctx context.Context, email, token, newPassword string) error
 	GenerateVerificationCode() string
 	ResendVerificationCode(ctx context.Context, email string) (string, error)
 }
@@ -182,24 +181,29 @@ func (s *userService) GetUserByEmail(ctx context.Context, email string) (*models
 }
 
 // UpdateUser 更新用户信息
-func (s *userService) UpdateUser(ctx context.Context, user *models.User) error {
+func (s *userService) UpdateUser(ctx context.Context, updateUserRequest *dto.UpdateUserRequest) error {
+	user, err := s.userRepo.GetByID(ctx, updateUserRequest.UserID)
+	if err != nil {
+		return err
+	}
+	updateUserRequest.ApplyUpdates(user)
 	return s.userRepo.Update(ctx, user)
 }
 
 // UpdatePassword 更新用户密码
-func (s *userService) UpdatePassword(ctx context.Context, userID int64, oldPassword, newPassword string) error {
-	user, err := s.userRepo.GetByID(ctx, userID)
+func (s *userService) UpdatePassword(ctx context.Context, dto *dto.UpdateUserPasswordDTO) error {
+	user, err := s.userRepo.GetByID(ctx, dto.UserID)
 	if err != nil {
 		return err
 	}
 
 	// 验证旧密码
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(dto.CurrentPassword)); err != nil {
 		return ErrInvalidPassword
 	}
 
 	// 对新密码进行哈希
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(dto.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("密码哈希失败: %w", err)
 	}
@@ -304,38 +308,6 @@ func (s *userService) ForgotPassword(ctx context.Context, email string) (string,
 	}
 
 	return resetToken, nil
-}
-
-// ResetPassword 重置密码
-func (s *userService) ResetPassword(ctx context.Context, email, token, newPassword string) error {
-	// 验证重置令牌
-	verified, err := s.emailSvc.VerifyPasswordResetToken(ctx, email, token)
-	if err != nil {
-		return fmt.Errorf("验证重置令牌时发生错误: %w", err)
-	}
-
-	if !verified {
-		return ErrInvalidResetToken
-	}
-
-	// 获取用户
-	user, err := s.userRepo.GetByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			return ErrEmailNotFound
-		}
-		return fmt.Errorf("查询用户时发生错误: %w", err)
-	}
-
-	// 对新密码进行哈希
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("密码哈希失败: %w", err)
-	}
-
-	// 更新密码
-	user.PasswordHash = string(hashedPassword)
-	return s.userRepo.Update(ctx, user)
 }
 
 // GenerateVerificationCode 生成6位验证码
