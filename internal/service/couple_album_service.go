@@ -131,6 +131,10 @@ func (s *coupleAlbumService) Update(ctx context.Context, id int64, req *dto.Upda
 		album.Description = req.Description
 	}
 
+	if req.CoverURL != nil {
+		album.CoverURL = req.CoverURL
+	}
+
 	if err := s.coupleAlbumRepo.Update(ctx, album); err != nil {
 		return nil, err
 	}

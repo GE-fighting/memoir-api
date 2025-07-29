@@ -129,6 +129,8 @@ func RegisterRoutes(router *gin.Engine, services service.Factory, db *gorm.DB, c
 		albumRoutes.DELETE("/:id", handlers.DeleteCoupleAlbumHandler(services))
 		albumRoutes.POST("/deletePhotos", handlers.DeleteCoupleAlbumPhotosHandler(services))
 		albumRoutes.GET("/all-media/page", handlers.PageCoupleMedia(services))
+		albumRoutes.GET("/:id", handlers.GetCoupleAlbumHandler(services))
+		albumRoutes.PUT("/:id", handlers.UpdateCoupleAlbumHandler(services))
 	}
 
 	// 附件路由
